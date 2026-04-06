@@ -1,0 +1,270 @@
+"use client";
+
+import React, { useState, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import { 
+  SparklesIcon, DocumentArrowDownIcon, AcademicCapIcon, 
+  LightBulbIcon, PresentationChartLineIcon,
+  UserGroupIcon, PencilSquareIcon, CheckBadgeIcon,
+  GlobeAltIcon, PuzzlePieceIcon, Cog6ToothIcon
+} from '@heroicons/react/24/outline';
+
+// --- 模拟专业教案数据 ---
+const mockLessonPlans: any = {
+  "photosynthesis": {
+    topic: "Photosynthesis: The Green Power Plant",
+    grade: "Grade 5",
+    standard: "Common Core (CCSS) / NGSS",
+    objective: "Students will be able to (SWBAT) explain how plants convert sunlight, water, and carbon dioxide into food (glucose) and release oxygen as a byproduct.",
+    standards: [
+      "NGSS 5-LS1-1: Support an argument that plants get materials for growth chiefly from air and water.",
+      "CCSS.ELA-LITERACY.RI.5.7: Draw on information from multiple print or digital sources."
+    ],
+    procedure: [
+      { 
+        type: "Hook", 
+        title: "Do Now: The Mystery Ingredient", 
+        time: "5 min", 
+        content: "Show a wilted plant vs. a healthy one. Ask: 'What is the 'secret fuel' that makes one thrive? Think-Pair-Share.'",
+        color: "bg-slate-50 border-slate-200 text-slate-800"
+      },
+      { 
+        type: "I Do", 
+        title: "Direct Instruction: The Formula", 
+        time: "15 min", 
+        content: "Teacher models the photosynthesis equation using a large visual aid. Define Chlorophyll and Stomata. Explain the 'Solar Panel' analogy for leaves.",
+        color: "bg-blue-50 border-blue-100 text-blue-900"
+      },
+      { 
+        type: "We Do", 
+        title: "Guided Practice: Labeling the Flow", 
+        time: "15 min", 
+        content: "Class works together on a giant anchor chart. Students come up to label 'Inputs' (Sun, CO2, H2O) and 'Outputs' (Glucose, O2).",
+        color: "bg-green-50 border-green-100 text-green-900"
+      },
+      { 
+        type: "You Do", 
+        title: "Independent Practice: Diagram Mastery", 
+        time: "15 min", 
+        content: "Students create their own 'Photosynthesis Factory' comic strip, showing the journey of a carbon dioxide molecule.",
+        color: "bg-purple-50 border-purple-100 text-purple-900"
+      }
+    ],
+    differentiation: {
+      ell: "Provide visual vocabulary cards with Spanish translations. Use sentence stems: 'Plants need ___ to...'",
+      iep: "Provide a pre-labeled diagram for students to color rather than drawing from scratch. Reduce writing requirement."
+    },
+    assessment: "Exit Ticket: List the three things a plant needs for photosynthesis and the one thing it produces for humans."
+  }
+};
+
+export default function EduSparkPro() {
+  const [topic, setTopic] = useState('');
+  const [grade, setGrade] = useState('Grade 5');
+  const [standard, setStandard] = useState('Common Core (CCSS)');
+  const [currentPlan, setCurrentPlan] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingPPT, setIsGeneratingPPT] = useState(false);
+  
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: `LessonPlan_${topic.replace(/\s+/g, '_')}`,
+  });
+
+  const handleGenerate = async () => {
+    if (!topic) return alert("Please enter a topic");
+    setIsGenerating(true);
+    setCurrentPlan(null);
+
+    setTimeout(() => {
+      const key = topic.toLowerCase().trim();
+      const plan = mockLessonPlans[key] || mockLessonPlans["photosynthesis"]; 
+      setCurrentPlan(plan);
+      setIsGenerating(false);
+    }, 1500);
+  };
+
+  const handleGeneratePPT = async () => {
+    if (!currentPlan) return alert("Please generate a lesson plan first!");
+    
+    setIsGeneratingPPT(true);
+    try {
+      const pptxgen = (await import("pptxgenjs")).default;
+      const pres = new pptxgen();
+      
+      // 1. 封面
+      let slide1 = pres.addSlide();
+      slide1.addText(currentPlan.topic, {
+        x: 1, y: 2, w: '80%', fontSize: 36, bold: true, color: '0F172A', align: 'center'
+      });
+      slide1.addText(`${grade} • ${standard}`, {
+        x: 1, y: 3.5, w: '80%', fontSize: 16, color: '64748B', align: 'center'
+      });
+
+      // 2. 目标页 - 修正此处 shapes 调用
+      let slide2 = pres.addSlide();
+      slide2.addText("OBJECTIVE (SWBAT)", { 
+        x: 0.5, y: 0.5, fontSize: 14, bold: true, color: '2563EB', charSpacing: 2 
+      } as any);
+      
+      // 【修正点】：使用字符串 "RECT" 代替 pres.shapes.RECT 避开类型错误
+      slide2.addShape("RECT" as any, { x: 0.5, y: 0.9, w: 9, h: 0.02, fill: { color: 'E2E8F0' } });
+      
+      slide2.addText(`"${currentPlan.objective}"`, { 
+        x: 0.5, y: 1.5, w: 8.5, fontSize: 24, color: '0F172A', italic: true 
+      });
+
+      // 3. 步骤页循环
+      currentPlan.procedure.forEach((step: any) => {
+        let stepSlide = pres.addSlide();
+        stepSlide.addText(`${step.type.toUpperCase()} • ${step.time}`, { 
+          x: 0.5, y: 0.5, fontSize: 12, bold: true, color: '64748B', charSpacing: 2 
+        } as any);
+        stepSlide.addShape("RECT" as any, { x: 0.5, y: 0.8, w: 9, h: 0.02, fill: { color: 'E2E8F0' } });
+        stepSlide.addText(step.title, { 
+          x: 0.5, y: 1.2, w: 8.5, fontSize: 28, bold: true, color: '0F172A' 
+        });
+        stepSlide.addText(step.content, { 
+          x: 0.5, y: 2.2, w: 8.5, fontSize: 20, color: '334155' 
+        });
+      });
+
+      // 4. 评估页
+      let slideLast = pres.addSlide();
+      slideLast.background = { color: "0F172A" };
+      slideLast.addText("EXIT TICKET", { 
+        x: 0.5, y: 0.5, fontSize: 14, bold: true, color: 'FBBF24', charSpacing: 2 
+      } as any);
+      slideLast.addText(currentPlan.assessment, { 
+        x: 0.5, y: 2, w: 8.5, fontSize: 24, color: 'FFFFFF' 
+      });
+
+      await pres.writeFile({ fileName: `SlideDeck_${topic.replace(/\s+/g, '_')}.pptx` });
+      
+    } catch (error) {
+      console.error("PPT Error:", error);
+    } finally {
+      setIsGeneratingPPT(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+      <nav className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-50">
+        <div className="flex items-center gap-2">
+          <SparklesIcon className="w-6 h-6 text-blue-600" />
+          <span className="text-2xl font-black text-slate-900 tracking-tight italic">EduSpark</span>
+        </div>
+        <button className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm shadow-md hover:bg-blue-700 transition">
+          Premium Plan
+        </button>
+      </nav>
+
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="w-72 bg-white border-r border-slate-200 p-6 overflow-y-auto hidden md:block">
+          <h3 className="text-xs font-black text-slate-400 uppercase mb-6 flex items-center gap-2">
+            <Cog6ToothIcon className="w-4 h-4" /> Curriculum Settings
+          </h3>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Grade Level</label>
+              <select value={grade} onChange={(e)=>setGrade(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                <option>Grade 5</option>
+                <option>High School</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Standards</label>
+              <select value={standard} onChange={(e)=>setStandard(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                <option>Common Core (CCSS)</option>
+                <option>NGSS (Science)</option>
+              </select>
+            </div>
+          </div>
+        </aside>
+
+        <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white p-2 rounded-2xl shadow-xl border border-slate-200 flex gap-2 mb-8">
+              <input 
+                type="text" value={topic} onChange={(e)=>setTopic(e.target.value)}
+                placeholder="Topic: Photosynthesis..."
+                className="flex-1 px-4 py-3 outline-none text-lg font-medium"
+              />
+              <button onClick={handleGenerate} disabled={isGenerating} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold">
+                {isGenerating ? "Planning..." : "Generate ✨"}
+              </button>
+            </div>
+
+            {currentPlan && (
+              <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-12">
+                <div className="px-8 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                  <span className="text-sm font-bold text-slate-400 uppercase flex items-center gap-2">
+                    <AcademicCapIcon className="w-4 h-4" /> Principal-Ready Document
+                  </span>
+                  <button onClick={() => handlePrint()} className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800">
+                    <DocumentArrowDownIcon className="w-4 h-4" /> Export Professional PDF
+                  </button>
+                </div>
+
+                <div className="p-12 bg-white" ref={contentRef}>
+                  <div className="mb-10 pb-6 border-b-2 border-slate-100">
+                    <h1 className="text-4xl font-black text-slate-900 mb-4">{currentPlan.topic}</h1>
+                    <div className="flex gap-3">
+                      <span className="bg-blue-50 text-blue-600 font-bold text-[10px] uppercase px-2 py-1 rounded tracking-[0.2em]">{grade}</span>
+                      <span className="bg-slate-100 text-slate-500 font-bold text-[10px] uppercase px-2 py-1 rounded tracking-[0.2em]">{standard}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-12">
+                    <section>
+                       <h2 className="text-lg font-black text-slate-900 uppercase tracking-widest mb-3">Objective (SWBAT)</h2>
+                       <p className="text-slate-700 leading-relaxed italic border-l-4 border-blue-100 pl-4">"{currentPlan.objective}"</p>
+                    </section>
+                    <section className="space-y-6">
+                       <h2 className="text-2xl font-black text-slate-900 mb-6">Instructional Procedures</h2>
+                       <div className="space-y-6">
+                          {currentPlan.procedure.map((step: any, i: number) => (
+                            <div key={i} className={`${step.color} p-6 rounded-2xl border`}>
+                               <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{step.type} • {step.time}</span>
+                               <h3 className="text-lg font-bold mb-2">{step.title}</h3>
+                               <p className="text-sm leading-relaxed opacity-90">{step.content}</p>
+                            </div>
+                          ))}
+                       </div>
+                    </section>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+
+        <aside className="w-80 bg-white border-l border-slate-200 p-6 hidden lg:block overflow-y-auto">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Premium Resources</h3>
+          <div className="space-y-4">
+             <div className="p-5 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all group">
+                <PresentationChartLineIcon className="w-8 h-8 text-slate-300 mb-3 group-hover:text-blue-500 transition-colors" />
+                <h4 className="text-sm font-bold mb-1">Slide Deck (PPT)</h4>
+                <p className="text-[11px] text-slate-500 mb-4">Full presentation for this lesson.</p>
+                <button 
+                  onClick={handleGeneratePPT} 
+                  disabled={!currentPlan || isGeneratingPPT} 
+                  className="w-full py-2 rounded-xl bg-white border border-slate-200 text-[10px] font-black uppercase text-slate-400 group-hover:text-blue-500 group-hover:border-blue-200 transition-all"
+                >
+                  {isGeneratingPPT ? "Generating..." : "Generate"}
+                </button>
+             </div>
+             <div className="p-5 rounded-3xl bg-slate-50 border border-slate-100 opacity-60">
+                <PencilSquareIcon className="w-8 h-8 text-slate-300 mb-3" />
+                <h4 className="text-sm font-bold mb-1">Worksheet</h4>
+                <button className="w-full py-2 rounded-xl bg-white border border-slate-200 text-[10px] font-black uppercase text-slate-400 cursor-not-allowed">Pro Only</button>
+             </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}

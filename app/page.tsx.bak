@@ -1,0 +1,284 @@
+"use client";
+
+import React, { useState, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import { 
+  SparklesIcon, DocumentArrowDownIcon, AcademicCapIcon, 
+  ClockIcon, LightBulbIcon, PresentationChartLineIcon,
+  UserGroupIcon, PencilSquareIcon, CheckBadgeIcon,
+  GlobeAltIcon, PuzzlePieceIcon, Cog6ToothIcon
+} from '@heroicons/react/24/outline';
+
+// --- 模拟专业教案数据 (实际开发中由后端 API 返回) ---
+const mockLessonPlans: any = {
+  "photosynthesis": {
+    topic: "Photosynthesis: The Green Power Plant",
+    grade: "Grade 5",
+    standard: "Common Core (CCSS) / NGSS",
+    objective: "Students will be able to (SWBAT) explain how plants convert sunlight, water, and carbon dioxide into food (glucose) and release oxygen as a byproduct.",
+    standards: [
+      "NGSS 5-LS1-1: Support an argument that plants get materials for growth chiefly from air and water.",
+      "CCSS.ELA-LITERACY.RI.5.7: Draw on information from multiple print or digital sources."
+    ],
+    procedure: [
+      { 
+        type: "Hook", 
+        title: "Do Now: The Mystery Ingredient", 
+        time: "5 min", 
+        content: "Show a wilted plant vs. a healthy one. Ask: 'What is the 'secret fuel' that makes one thrive? Think-Pair-Share.'",
+        color: "bg-slate-50 border-slate-200 text-slate-800"
+      },
+      { 
+        type: "I Do", 
+        title: "Direct Instruction: The Formula", 
+        time: "15 min", 
+        content: "Teacher models the photosynthesis equation using a large visual aid. Define Chlorophyll and Stomata. Explain the 'Solar Panel' analogy for leaves.",
+        color: "bg-blue-50 border-blue-100 text-blue-900"
+      },
+      { 
+        type: "We Do", 
+        title: "Guided Practice: Labeling the Flow", 
+        time: "15 min", 
+        content: "Class works together on a giant anchor chart. Students come up to label 'Inputs' (Sun, CO2, H2O) and 'Outputs' (Glucose, O2).",
+        color: "bg-green-50 border-green-100 text-green-900"
+      },
+      { 
+        type: "You Do", 
+        title: "Independent Practice: Diagram Mastery", 
+        time: "15 min", 
+        content: "Students create their own 'Photosynthesis Factory' comic strip, showing the journey of a carbon dioxide molecule.",
+        color: "bg-purple-50 border-purple-100 text-purple-900"
+      }
+    ],
+    differentiation: {
+      ell: "Provide visual vocabulary cards with Spanish translations. Use sentence stems: 'Plants need ___ to...'",
+      iep: "Provide a pre-labeled diagram for students to color rather than drawing from scratch. Reduce writing requirement."
+    },
+    assessment: "Exit Ticket: List the three things a plant needs for photosynthesis and the one thing it produces for humans."
+  }
+};
+
+export default function EduSparkPro() {
+  const [topic, setTopic] = useState('');
+  const [grade, setGrade] = useState('Grade 5');
+  const [standard, setStandard] = useState('Common Core (CCSS)');
+  const [currentPlan, setCurrentPlan] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // PDF 打印引用
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // 核心功能：调用浏览器原生打印引擎生成 PDF
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: `LessonPlan_${topic.replace(/\s+/g, '_')}`,
+  });
+
+  const handleGenerate = async () => {
+    if (!topic) return alert("Please enter a topic");
+    setIsGenerating(true);
+    setCurrentPlan(null);
+
+    // 模拟 API 调用延迟
+    setTimeout(() => {
+      const key = topic.toLowerCase().trim();
+      const plan = mockLessonPlans[key] || mockLessonPlans["photosynthesis"]; 
+      setCurrentPlan(plan);
+      setIsGenerating(false);
+    }, 1500);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+      {/* 顶部导航 */}
+      <nav className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-50">
+        <div className="flex items-center gap-2">
+          <SparklesIcon className="w-6 h-6 text-blue-600" />
+          <span className="text-2xl font-black text-slate-900 tracking-tight italic">EduSpark</span>
+        </div>
+        <button className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold text-sm shadow-md hover:bg-blue-700 transition">
+          Premium Plan
+        </button>
+      </nav>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* 左侧：配置面板 */}
+        <aside className="w-72 bg-white border-r border-slate-200 p-6 overflow-y-auto hidden md:block">
+          <h3 className="text-xs font-black text-slate-400 uppercase mb-6 flex items-center gap-2">
+            <Cog6ToothIcon className="w-4 h-4" /> Curriculum Settings
+          </h3>
+          
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Grade Level</label>
+              <select 
+                value={grade} 
+                onChange={(e)=>setGrade(e.target.value)} 
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option>Kindergarten</option>
+                <option>Grade 5</option>
+                <option>High School</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Standards</label>
+              <select 
+                value={standard} 
+                onChange={(e)=>setStandard(e.target.value)} 
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option>Common Core (CCSS)</option>
+                <option>NGSS (Science)</option>
+                <option>IB Curriculum</option>
+              </select>
+            </div>
+          </div>
+        </aside>
+
+        {/* 中间：主编辑区 */}
+        <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
+          <div className="max-w-4xl mx-auto">
+            {/* 输入框 */}
+            <div className="bg-white p-2 rounded-2xl shadow-xl border border-slate-200 flex gap-2 mb-8 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+              <input 
+                type="text" 
+                value={topic}
+                onChange={(e)=>setTopic(e.target.value)}
+                placeholder="Topic: Photosynthesis, Fractions, Civil War..."
+                className="flex-1 px-4 py-3 outline-none bg-transparent text-lg font-medium"
+              />
+              <button 
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 disabled:bg-slate-300 transition-colors shadow-lg shadow-blue-200"
+              >
+                {isGenerating ? "Planning..." : "Generate ✨"}
+              </button>
+            </div>
+
+            {/* 教案展示区 */}
+            {currentPlan && (
+              <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden relative mb-12">
+                <div className="h-2 bg-blue-600"></div>
+                
+                <div className="px-8 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                  <span className="text-sm font-bold text-slate-400 uppercase flex items-center gap-2">
+                    <AcademicCapIcon className="w-4 h-4" /> Principal-Ready Document
+                  </span>
+                  <button 
+                    onClick={() => handlePrint()}
+                    className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition shadow-lg"
+                  >
+                    <DocumentArrowDownIcon className="w-4 h-4" /> Export Professional PDF
+                  </button>
+                </div>
+
+                {/* PDF 打印目标区域 */}
+                <div className="p-12 bg-white" ref={contentRef}>
+                  {/* Header */}
+                  <div className="mb-10 pb-6 border-b-2 border-slate-100">
+                    <div className="flex justify-between items-start mb-4">
+                       <h1 className="text-4xl font-black text-slate-900 leading-tight">{currentPlan.topic}</h1>
+                       <div className="text-right print:hidden">
+                          <SparklesIcon className="w-8 h-8 text-blue-100 ml-auto" />
+                       </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <span className="bg-blue-50 text-blue-600 font-bold text-[10px] uppercase px-2 py-1 rounded tracking-[0.2em]">{grade}</span>
+                      <span className="bg-slate-100 text-slate-500 font-bold text-[10px] uppercase px-2 py-1 rounded tracking-[0.2em]">{standard}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-12">
+                    {/* Objective */}
+                    <section>
+                       <h2 className="text-lg font-black text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <CheckBadgeIcon className="w-5 h-5 text-blue-600 print:hidden" /> Objective (SWBAT)
+                       </h2>
+                       <p className="text-slate-700 leading-relaxed italic border-l-4 border-blue-100 pl-4">"{currentPlan.objective}"</p>
+                    </section>
+
+                    {/* Standards */}
+                    <section>
+                       <h2 className="text-lg font-black text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <GlobeAltIcon className="w-5 h-5 text-slate-400 print:hidden" /> Standards Alignment
+                       </h2>
+                       <ul className="space-y-2">
+                          {currentPlan.standards.map((s: string, i: number) => (
+                            <li key={i} className="text-xs font-mono text-slate-500 bg-slate-50 p-2 rounded">{s}</li>
+                          ))}
+                       </ul>
+                    </section>
+
+                    {/* Procedures (I Do, We Do, You Do) */}
+                    <section className="space-y-6">
+                       <h2 className="text-2xl font-black text-slate-900 mb-6">Instructional Procedures</h2>
+                       <div className="space-y-6">
+                          {currentPlan.procedure.map((step: any, i: number) => (
+                            <div key={i} className={`${step.color} p-6 rounded-2xl border transition-all print:bg-white print:border-l-4 print:border-slate-300 print:rounded-none`}>
+                               <div className="flex justify-between items-center mb-3">
+                                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{step.type} • {step.time}</span>
+                               </div>
+                               <h3 className="text-lg font-bold mb-2">{step.title}</h3>
+                               <p className="text-sm leading-relaxed opacity-90">{step.content}</p>
+                            </div>
+                          ))}
+                       </div>
+                    </section>
+
+                    {/* Differentiation (付费痛点功能) */}
+                    <section className="pt-8 border-t border-slate-100">
+                       <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                          <PuzzlePieceIcon className="w-6 h-6 text-orange-500 print:hidden" /> Differentiation Strategies
+                       </h2>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 print:border-none print:p-0">
+                             <h4 className="text-xs font-black text-slate-400 uppercase mb-2">ELL Students</h4>
+                             <p className="text-sm text-slate-600">{currentPlan.differentiation.ell}</p>
+                          </div>
+                          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 print:border-none print:p-0">
+                             <h4 className="text-xs font-black text-slate-400 uppercase mb-2">IEP / Special Needs</h4>
+                             <p className="text-sm text-slate-600">{currentPlan.differentiation.iep}</p>
+                          </div>
+                       </div>
+                    </section>
+
+                    {/* Assessment */}
+                    <section className="bg-slate-900 text-white p-8 rounded-3xl print:bg-white print:text-black print:border-2 print:border-slate-900">
+                       <h2 className="text-lg font-black uppercase mb-3 flex items-center gap-2">
+                          <LightBulbIcon className="w-5 h-5 text-yellow-400 print:hidden" /> Exit Ticket
+                       </h2>
+                       <p className="text-sm leading-relaxed opacity-90">{currentPlan.assessment}</p>
+                    </section>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+
+        {/* 右侧：PRO 工具栏 (变现勾子) */}
+        <aside className="w-80 bg-white border-l border-slate-200 p-6 hidden lg:block overflow-y-auto">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Premium Resources</h3>
+          <div className="space-y-4">
+             {[
+               { icon: PencilSquareIcon, title: "Student Worksheet", desc: "Matching practice sheet with keys." },
+               { icon: PresentationChartLineIcon, title: "Slide Deck (PPT)", desc: "10 slides based on this lesson." },
+               { icon: UserGroupIcon, title: "Vocabulary Cards", desc: "Printable cards with visuals." }
+             ].map((item, i) => (
+               <div key={i} className="group p-5 rounded-3xl bg-slate-50 border border-slate-100 relative overflow-hidden transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1">
+                  <div className="absolute -top-1 -right-1 bg-blue-100 text-blue-600 text-[8px] font-black px-2 py-1 rounded-bl-xl uppercase">Pro</div>
+                  <item.icon className="w-8 h-8 text-slate-300 mb-3 group-hover:text-blue-500 transition-colors" />
+                  <h4 className="text-sm font-bold mb-1">{item.title}</h4>
+                  <p className="text-[11px] text-slate-500 leading-relaxed mb-4">{item.desc}</p>
+                  <button className="w-full py-2 rounded-xl bg-white border border-slate-200 text-[10px] font-black uppercase text-slate-400 cursor-not-allowed group-hover:border-blue-200 group-hover:text-blue-500 transition-all">Generate</button>
+               </div>
+             ))}
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
