@@ -151,7 +151,7 @@ export default function EduSparkPro() {
     setIsGeneratingPPT(true);
     
     try {
-      const PptxGenJS = (await import("pptxgenjs")).default;
+      const PptxGenJS = (await import(/* webpackIgnore: true */ "pptxgenjs")).default;
       const pres = new PptxGenJS();
       
       // Slide 1: Title
