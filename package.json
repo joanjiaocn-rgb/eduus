@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@react-oauth/google": "^0.13.4",
+    "googleapis": "^171.4.0",
     "next": "15.2.4",
     "openai": "^4.104.0",
     "pptxgenjs": "^4.0.1",

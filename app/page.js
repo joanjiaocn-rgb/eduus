@@ -2,12 +2,14 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import { 
   SparklesIcon, DocumentArrowDownIcon, AcademicCapIcon, 
   CheckBadgeIcon, PuzzlePieceIcon, Cog6ToothIcon,
   ChatBubbleLeftRightIcon, BeakerIcon, BookOpenIcon, 
   ExclamationTriangleIcon, ClockIcon, TrashIcon,
-  PencilSquareIcon, CheckIcon, XMarkIcon, ChevronLeftIcon
+  PencilSquareIcon, CheckIcon, XMarkIcon, ChevronLeftIcon,
+  Squares2X2Icon, DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 const STORAGE_KEY = 'eduspark_lesson_history';
@@ -115,6 +117,10 @@ export default function EduSparkPro() {
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [saveToast, setSaveToast] = useState(false);
+  const [mode, setMode] = useState('lesson'); // 'lesson' | 'unit'
+  const [currentUnit, setCurrentUnit] = useState(null);
+  const [googleUser, setGoogleUser] = useState(null);
+  const [exportToast, setExportToast] = useState(null);
 
   const contentRef = useRef(null);
 
@@ -150,36 +156,287 @@ export default function EduSparkPro() {
     documentTitle: `LessonPlan_${topic.replace(/\s+/g, '_')}`,
   });
 
+  // Google Login
+  const login = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      console.log('Login Success:', tokenResponse);
+      // 直接使用 tokenResponse 作为用户信息
+      setGoogleUser(tokenResponse);
+    },
+    onError: (errorResponse) => {
+      console.error('Login Failed:', errorResponse);
+    },
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents',
+  });
+
+  const handleLogout = () => {
+    googleLogout();
+    setGoogleUser(null);
+  };
+
+  // Export to Google Docs
+  const exportToGoogleDocs = async (title, content) => {
+    if (!googleUser?.access_token) {
+      alert('Please sign in with Google first');
+      return;
+    }
+
+    try {
+      const textContent = typeof content === 'object'
+        ? formatLessonPlanForExport(content)
+        : content;
+
+      // 用 multipart upload 一次性创建并写入内容
+      const metadata = {
+        name: title || 'Lesson Plan',
+        mimeType: 'application/vnd.google-apps.document',
+      };
+
+      const boundary = 'eduspark_boundary_xyz';
+      const body = [
+        `--${boundary}`,
+        'Content-Type: application/json; charset=UTF-8',
+        '',
+        JSON.stringify(metadata),
+        `--${boundary}`,
+        'Content-Type: text/plain; charset=UTF-8',
+        '',
+        textContent,
+        `--${boundary}--`,
+      ].join('\r\n');
+
+      const uploadResponse = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&convert=true',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${googleUser.access_token}`,
+            'Content-Type': `multipart/related; boundary=${boundary}`,
+          },
+          body,
+        }
+      );
+
+      if (!uploadResponse.ok) {
+        const err = await uploadResponse.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `HTTP ${uploadResponse.status}`);
+      }
+
+      const file = await uploadResponse.json();
+      console.log('Google Doc created:', file);
+
+      setExportToast({ type: 'success', message: 'Exported to Google Docs!' });
+      setTimeout(() => setExportToast(null), 3000);
+      window.open(`https://docs.google.com/document/d/${file.id}/edit`, '_blank');
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Failed to export: ' + err.message);
+    }
+  };
+
+  // 格式化教案为纯文本
+  const formatLessonPlanForExport = (plan) => {
+    let text = '';
+    
+    text += `${plan.topic || 'Lesson Plan'}\n`;
+    text += `${'='.repeat(plan.topic?.length || 20)}\n\n`;
+    
+    if (plan.objective) {
+      text += `OBJECTIVE\n${plan.objective}\n\n`;
+    }
+    
+    if (plan.standardCode) {
+      text += `STANDARD\n${plan.standardCode}\n\n`;
+    }
+    
+    if (plan.essentialQuestions?.length) {
+      text += `ESSENTIAL QUESTIONS\n`;
+      plan.essentialQuestions.forEach((q, i) => {
+        text += `${i + 1}. ${q}\n`;
+      });
+      text += '\n';
+    }
+    
+    if (plan.materials?.length) {
+      text += `MATERIALS\n`;
+      plan.materials.forEach(m => {
+        text += `• ${m}\n`;
+      });
+      text += '\n';
+    }
+    
+    if (plan.procedure?.length) {
+      text += `PROCEDURE\n`;
+      plan.procedure.forEach((step, i) => {
+        text += `\n${step.type}: ${step.title} (${step.time})\n`;
+        text += `${'-'.repeat(40)}\n`;
+        if (step.teacherScript) {
+          text += `Teacher Script: ${step.teacherScript}\n\n`;
+        }
+        if (step.content) {
+          text += `${step.content}\n\n`;
+        }
+      });
+    }
+    
+    if (plan.differentiation) {
+      text += `DIFFERENTIATION\n`;
+      Object.entries(plan.differentiation).forEach(([key, value]) => {
+        text += `${key.toUpperCase()}: ${value}\n\n`;
+      });
+    }
+    
+    text += `\nGenerated by EduSpark AI`;
+    
+    return text;
+  };
+
+  // Post to Google Classroom
+  const postToClassroom = async (courseId, title, description) => {
+    if (!googleUser?.access_token) {
+      alert('Please sign in with Google first');
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${googleUser.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title,
+          description: description,
+          workType: 'ASSIGNMENT',
+          state: 'PUBLISHED',
+        }),
+      });
+
+      if (response.ok) {
+        setExportToast({type: 'success', message: 'Posted to Google Classroom!'});
+        setTimeout(() => setExportToast(null), 3000);
+      } else {
+        throw new Error('Failed to post');
+      }
+    } catch (err) {
+      console.error('Classroom error:', err);
+      alert('Failed to post to Google Classroom');
+    }
+  };
+
   const handleGenerate = async () => {
     if (!topic.trim()) return alert("Please enter a lesson topic.");
     setIsGenerating(true);
     setCurrentPlan(null);
     setCurrentId(null);
 
-    const systemPrompt = `You are a National Board Certified Teacher (USA). 
-    Generate a highly professional lesson plan in JSON format. 
-    Strict adherence to: 
-    1. SWBAT objectives (Bloom's Taxonomy). 
-    2. "I Do, We Do, You Do" framework. 
-    3. Identify student misconceptions. 
-    4. Provide specific teacher scripts and scaffolding for ELL/IEP.`;
+    const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools. 
 
-    const userPrompt = `Generate a lesson for Topic: ${topic}, Grade: ${grade}, Standard: ${standard}. 
-    Return strictly a JSON object with this exact structure:
+Generate a comprehensive, publication-quality lesson plan that would impress a principal during an observation.
+
+CRITICAL REQUIREMENTS:
+1. Use precise educational terminology (Bloom's Taxonomy, DOK levels, formative/summative assessment)
+2. Include VERBATIM teacher scripts - what the teacher actually says word-for-word, in quotes
+3. Provide Socratic questioning sequences that scaffold from low to high cognitive demand
+4. Include specific standard codes (e.g., CCSS.ELA-LITERACY.RI.5.3)
+5. List ALL materials needed with quantities
+6. Provide precise pacing (down to the minute) for a 45-50 minute class
+7. Include pre-class preparation and homework extension
+8. Address common misconceptions with specific examples
+
+The output must be detailed enough that a substitute teacher could teach this lesson successfully.`;
+
+    const userPrompt = `Create a professional lesson plan for:
+- Topic: ${topic}
+- Grade: ${grade}
+- Subject: ${subject}
+- Standards Framework: ${standard}
+
+Return a JSON object with this exact structure:
+{
+  "topic": "Engaging, creative lesson title",
+  "standardCode": "Specific standard code like CCSS.ELA-LITERACY.RI.5.3",
+  "objective": "SWBAT... (use strong Bloom's verb like analyze, evaluate, create)",
+  "dokLevel": "Depth of Knowledge level (1-4)",
+  "bloomsLevel": "Bloom's Taxonomy level (Remember, Understand, Apply, Analyze, Evaluate, Create)",
+  "essentialQuestions": ["Overarching question 1", "Overarching question 2"],
+  "learningTargets": ["Students will be able to...", "Students will understand that..."],
+  "misconceptions": [
+    {"misconception": "What students often think", "correction": "How to address it"}
+  ],
+  "materials": ["Material 1 with quantity", "Material 2 with quantity"],
+  "preparation": "What teacher needs to do before class (5-10 minutes)",
+  "pacingGuide": {
+    "totalTime": "45 minutes",
+    "breakdown": [
+      {"phase": "Hook/Do Now", "time": "5 min", "description": "Brief description"},
+      {"phase": "Direct Instruction", "time": "10 min", "description": "Brief description"},
+      {"phase": "Guided Practice", "time": "12 min", "description": "Brief description"},
+      {"phase": "Independent Practice", "time": "13 min", "description": "Brief description"},
+      {"phase": "Closure/Exit Ticket", "time": "5 min", "description": "Brief description"}
+    ]
+  },
+  "procedure": [
     {
-      "topic": "Creative Title", 
-      "objective": "SWBAT...", 
-      "essentialQuestions": ["Q1", "Q2"],
-      "misconceptions": ["Misconception 1", "Misconception 2"], 
-      "procedure": [
-        {"type": "Hook", "title": "Engage", "time": "5m", "content": "Script/Activity", "color": "bg-slate-50 border-slate-200"},
-        {"type": "I Do", "title": "Model", "time": "15m", "content": "Teacher direct instruction", "color": "bg-blue-50 border-blue-100"},
-        {"type": "We Do", "title": "Guided", "time": "15m", "content": "Collaborative task", "color": "bg-green-50 border-green-100"},
-        {"type": "You Do", "title": "Independent", "time": "10m", "content": "Application task", "color": "bg-purple-50 border-purple-100"}
-      ],
-      "differentiation": {"ell": "Strategy for ELL", "advanced": "Strategy for Advanced", "iep": "Strategy for IEP"},
-      "assessment": "Exit Ticket description"
-    }`;
+      "type": "Hook",
+      "title": "Engage & Activate",
+      "time": "5m",
+      "teacherScript": "EXACT words the teacher says: 'Class, today we're going to...'",
+      "studentResponse": "Expected student responses or actions",
+      "content": "Detailed description of the hook activity (2-3 sentences)",
+      "color": "bg-orange-50 border-orange-200"
+    },
+    {
+      "type": "I Do",
+      "title": "Teacher Modeling",
+      "time": "10m",
+      "teacherScript": "EXACT words the teacher says while modeling: 'Watch me as I...'",
+      "socraticQuestions": ["Low-level question?", "Mid-level question?", "High-level question?"],
+      "content": "Detailed modeling description with think-aloud process",
+      "color": "bg-blue-50 border-blue-200"
+    },
+    {
+      "type": "We Do",
+      "title": "Guided Practice",
+      "time": "15m",
+      "teacherScript": "EXACT words for guided practice: 'Now let's try this together...'",
+      "socraticQuestions": ["Scaffolded question 1?", "Scaffolded question 2?", "Scaffolded question 3?"],
+      "content": "Detailed guided practice with questioning sequence",
+      "color": "bg-green-50 border-green-200"
+    },
+    {
+      "type": "You Do",
+      "title": "Independent Practice",
+      "time": "12m",
+      "teacherScript": "Transition language: 'Now it's your turn...'",
+      "content": "Independent work description with success criteria and monitoring tips",
+      "color": "bg-purple-50 border-purple-200"
+    },
+    {
+      "type": "Closure",
+      "title": "Wrap-Up & Exit Ticket",
+      "time": "3m",
+      "teacherScript": "Closure language: 'Let's review what we learned today...'",
+      "content": "Closure activity and exit ticket description",
+      "color": "bg-slate-50 border-slate-200"
+    }
+  ],
+  "anchorChart": "Description of anchor chart to create during lesson (title and key elements)",
+  "differentiation": {
+    "approaching": "Specific scaffold for struggling learners (IEP, 504) - sentence starters, graphic organizers, etc.",
+    "onLevel": "Standard support for grade-level learners",
+    "advanced": "Extension for gifted/high-achieving students - deeper analysis, creative application",
+    "ell": "Specific ELL strategies - sentence frames, visuals, native language support, vocabulary pre-teaching"
+  },
+  "assessment": {
+    "formative": "How to check understanding during lesson (thumbs up, whiteboards, turn and talk)",
+    "summative": "Exit ticket or end-of-lesson assessment with specific question",
+    "successCriteria": ["Student can...", "Student demonstrates...", "Student explains..."]
+  },
+  "homework": "Extension activity or homework assignment connected to the lesson",
+  "reflectionPrompts": ["What went well?", "What would you change?", "Which students need follow-up?"]
+}`;
 
     try {
       const response = await fetch('/api/generate', {
@@ -198,6 +455,100 @@ export default function EduSparkPro() {
     } catch (err) {
       console.error("Generation Error:", err);
       alert("Failed to reach the AI expert. Please check your API configuration or terminal logs.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateUnit = async () => {
+    if (!topic.trim()) return alert("Please enter a unit topic.");
+    setIsGenerating(true);
+    setCurrentUnit(null);
+    setCurrentId(null);
+
+    const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools.
+
+Generate a comprehensive UNIT PLAN consisting of 8-12 sequential lessons that build upon each other. This should be publication-quality that would impress a principal.
+
+CRITICAL REQUIREMENTS:
+1. Create 8-12 lessons that show clear progression and scaffolding
+2. Each lesson must have specific learning objectives aligned to standards
+3. Include big ideas and essential questions for the entire unit
+4. Provide a culminating assessment/project for the unit
+5. Show how each lesson connects to the next (progression map)
+6. Include vocabulary progression across lessons
+7. Address common misconceptions at the unit level
+8. Provide differentiation strategies for the entire unit
+
+The unit plan must be detailed enough that a substitute teacher could teach any lesson successfully.`;
+
+    const userPrompt = `Create a comprehensive unit plan for:
+- Unit Topic: ${topic}
+- Grade: ${grade}
+- Subject: ${subject}
+- Standards Framework: ${standard}
+- Duration: 2-3 weeks (8-12 lessons)
+
+Return a JSON object with this exact structure:
+{
+  "unitTitle": "Engaging unit title",
+  "bigIdeas": ["Big idea 1", "Big idea 2", "Big idea 3"],
+  "essentialQuestions": ["Overarching EQ 1", "Overarching EQ 2"],
+  "standards": ["Specific standard code 1", "Specific standard code 2"],
+  "duration": "2-3 weeks (10 lessons)",
+  "vocabulary": ["Term 1", "Term 2", "Term 3", "Term 4", "Term 5"],
+  "misconceptions": [
+    {"misconception": "Common unit-level misconception", "correction": "How to address throughout unit"}
+  ],
+  "materials": ["Material 1 with quantity", "Material 2 with quantity"],
+  "culminatingAssessment": {
+    "title": "Final Project/Assessment name",
+    "description": "Detailed description of culminating task",
+    "rubric": ["Criteria 1: Exceeds/Meets/Below", "Criteria 2: Exceeds/Meets/Below"]
+  },
+  "lessons": [
+    {
+      "lessonNumber": 1,
+      "title": "Lesson 1 Title",
+      "duration": "45 min",
+      "objective": "SWBAT...",
+      "keyActivities": ["Activity 1", "Activity 2"],
+      "homework": "Brief homework description"
+    },
+    {
+      "lessonNumber": 2,
+      "title": "Lesson 2 Title",
+      "duration": "45 min",
+      "objective": "SWBAT...",
+      "keyActivities": ["Activity 1", "Activity 2"],
+      "homework": "Brief homework description"
+    }
+  ],
+  "differentiation": {
+    "approaching": "Unit-level scaffold for struggling learners",
+    "onLevel": "Standard support",
+    "advanced": "Extension opportunities throughout unit",
+    "ell": "ELL strategies for the unit"
+  },
+  "reflectionPrompts": ["What went well?", "What would you change?"]
+}`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt })
+      });
+
+      if (!response.ok) throw new Error(`API returned status: ${response.status}`);
+
+      const data = await response.json();
+      setCurrentUnit(data);
+      const newId = saveCurrentPlan({...data, isUnit: true}, Date.now().toString());
+      setCurrentId(newId);
+    } catch (err) {
+      console.error("Generation Error:", err);
+      alert("Failed to generate unit plan. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -242,14 +593,43 @@ export default function EduSparkPro() {
           <CheckIcon className="w-4 h-4" /> Saved to history
         </div>
       )}
+      
+      {exportToast && (
+        <div className={`fixed top-4 right-4 z-[100] px-4 py-2 rounded-xl text-sm font-bold shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2 ${
+          exportToast.type === 'success' ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          <CheckIcon className="w-4 h-4" /> {exportToast.message}
+        </div>
+      )}
 
       {/* Nav */}
       <nav className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <SparklesIcon className="w-6 h-6 text-blue-600" />
           <span className="text-2xl font-black tracking-tight">EduSpark AI</span>
+          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold ml-2">PRO</span>
         </div>
         <div className="flex items-center gap-3">
+          {/* Mode Toggle */}
+          <div className="flex items-center bg-slate-100 rounded-lg p-1">
+            <button
+              onClick={() => setMode('lesson')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                mode === 'lesson' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <DocumentTextIcon className="w-3.5 h-3.5" /> Single Lesson
+            </button>
+            <button
+              onClick={() => setMode('unit')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                mode === 'unit' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <Squares2X2Icon className="w-3.5 h-3.5" /> Unit Plan
+            </button>
+          </div>
+          
           <button
             onClick={() => setShowHistory(h => !h)}
             className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg border transition-colors ${
@@ -259,6 +639,43 @@ export default function EduSparkPro() {
             <ClockIcon className="w-4 h-4" />
             History {history.length > 0 && <span className="bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px]">{history.length}</span>}
           </button>
+          
+          {/* Join Waitlist Link */}
+          <a
+            href="/waitlist"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"
+          >
+            Join Waitlist
+          </a>
+          
+          {/* Google Login */}
+          {googleUser ? (
+            <div className="flex items-center gap-2">
+              {googleUser.picture && (
+                <img src={googleUser.picture} alt="Profile" className="w-8 h-8 rounded-full" />
+              )}
+              <button
+                onClick={handleLogout}
+                className="text-xs font-bold text-slate-500 hover:text-slate-700 px-2"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => login()}
+              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Sign in with Google
+            </button>
+          )}
+          
           <div className="text-[10px] font-black bg-slate-900 text-white px-3 py-1 rounded-full uppercase">Expert Mode</div>
         </div>
       </nav>
@@ -357,15 +774,15 @@ export default function EduSparkPro() {
               </div>
               <input
                 type="text" value={topic} onChange={(e) => setTopic(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                placeholder="Enter topic (e.g., Solar System, Civil War, Fractions)..."
+                onKeyDown={(e) => e.key === 'Enter' && (mode === 'lesson' ? handleGenerate() : handleGenerateUnit())}
+                placeholder={mode === 'lesson' ? "Enter lesson topic (e.g., Solar System)..." : "Enter unit topic (e.g., Earth and Space)..."}
                 className="flex-1 px-4 py-3 outline-none font-medium text-slate-800"
               />
               <button
-                onClick={handleGenerate} disabled={isGenerating}
+                onClick={mode === 'lesson' ? handleGenerate : handleGenerateUnit} disabled={isGenerating}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                {isGenerating ? "Drafting Plan..." : "Generate ✨"}
+                {isGenerating ? (mode === 'lesson' ? "Drafting Plan..." : "Creating Unit...") : (mode === 'lesson' ? "Generate Lesson ✨" : "Generate Unit 📚")}
               </button>
             </div>
 
@@ -403,6 +820,18 @@ export default function EduSparkPro() {
                     <button onClick={handlePrint} className="bg-slate-900 text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 flex items-center gap-2">
                       <DocumentArrowDownIcon className="w-4 h-4" /> Export PDF
                     </button>
+                    {googleUser && (
+                      <button 
+                        onClick={() => exportToGoogleDocs(currentPlan.topic, JSON.stringify(currentPlan, null, 2))}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
+                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Google Docs
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -462,17 +891,17 @@ export default function EduSparkPro() {
                         <h2 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                           <ExclamationTriangleIcon className="w-4 h-4" /> Common Misconceptions
                         </h2>
-                        <ul className="space-y-2">
+                        <ul className="space-y-3">
                           {currentPlan.misconceptions.map((m, i) => (
-                            <li key={i} className="text-sm text-amber-900 leading-relaxed font-medium">
-                              • <EditableText
-                                value={m}
-                                onChange={val => updatePlan(p => ({
-                                  ...p,
-                                  misconceptions: p.misconceptions.map((mm, mi) => mi === i ? val : mm)
-                                }))}
-                                className="inline"
-                              />
+                            <li key={i} className="text-sm text-amber-900 leading-relaxed">
+                              <div className="font-medium mb-1">
+                                • Misconception: {typeof m === 'object' ? m.misconception : m}
+                              </div>
+                              {typeof m === 'object' && m.correction && (
+                                <div className="text-amber-700 ml-4 text-xs">
+                                  ✓ Correction: {m.correction}
+                                </div>
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -533,22 +962,223 @@ export default function EduSparkPro() {
                     )}
 
                     {/* Assessment */}
-                    <section className="pt-8 border-t-2 border-slate-100 border-dashed text-center">
-                      <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Formative Assessment</h2>
-                      <EditableText
-                        value={currentPlan.assessment}
-                        onChange={val => updatePlan(p => ({ ...p, assessment: val }))}
-                        multiline
-                        className="font-medium text-slate-800 text-lg max-w-2xl mx-auto block"
-                      />
-                    </section>
+                    {currentPlan.assessment && (
+                      <section className="pt-8 border-t-2 border-slate-100 border-dashed">
+                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Assessment</h2>
+                        {typeof currentPlan.assessment === 'object' ? (
+                          <div className="space-y-4 max-w-2xl mx-auto">
+                            {currentPlan.assessment.formative && (
+                              <div className="bg-blue-50 p-4 rounded-xl">
+                                <h3 className="text-xs font-bold text-blue-600 mb-2">Formative</h3>
+                                <p className="text-sm text-slate-700">{currentPlan.assessment.formative}</p>
+                              </div>
+                            )}
+                            {currentPlan.assessment.summative && (
+                              <div className="bg-purple-50 p-4 rounded-xl">
+                                <h3 className="text-xs font-bold text-purple-600 mb-2">Summative</h3>
+                                <p className="text-sm text-slate-700">{currentPlan.assessment.summative}</p>
+                              </div>
+                            )}
+                            {currentPlan.assessment.successCriteria && (
+                              <div className="bg-emerald-50 p-4 rounded-xl">
+                                <h3 className="text-xs font-bold text-emerald-600 mb-2">Success Criteria</h3>
+                                <ul className="text-sm text-slate-700 space-y-1">
+                                  {currentPlan.assessment.successCriteria.map((criteria, i) => (
+                                    <li key={i}>✓ {criteria}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <EditableText
+                            value={currentPlan.assessment}
+                            onChange={val => updatePlan(p => ({ ...p, assessment: val }))}
+                            multiline
+                            className="font-medium text-slate-800 text-lg max-w-2xl mx-auto block"
+                          />
+                        )}
+                      </section>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Unit Plan Display */}
+            {currentUnit && !isGenerating && (
+              <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-20">
+                {/* Toolbar */}
+                <div className="px-8 py-4 border-b bg-slate-50 flex justify-between items-center sticky top-0 z-10">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <Squares2X2Icon className="w-4 h-4" /> Unit Plan
+                    <span className="text-emerald-500 flex items-center gap-1 ml-2">
+                      <PencilSquareIcon className="w-3 h-3" /> Editable
+                    </span>
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveCurrentPlan({...currentUnit, isUnit: true}, currentId)}
+                      className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 flex items-center gap-1"
+                    >
+                      <CheckIcon className="w-3.5 h-3.5" /> Save
+                    </button>
+                    <button onClick={handlePrint} className="bg-slate-900 text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 flex items-center gap-2">
+                      <DocumentArrowDownIcon className="w-4 h-4" /> Export PDF
+                    </button>
+                    {googleUser && (
+                      <button 
+                        onClick={() => exportToGoogleDocs(currentUnit.unitTitle, JSON.stringify(currentUnit, null, 2))}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
+                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Google Docs
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-10 md:p-16" ref={contentRef}>
+                  {/* Unit Title */}
+                  <div className="mb-10 pb-8 border-b-2 border-slate-100">
+                    <h1 className="text-4xl md:text-5xl font-black leading-tight text-slate-900 block mb-4">{currentUnit.unitTitle}</h1>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="bg-blue-100 text-blue-700 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{subject}</span>
+                      <span className="bg-slate-100 text-slate-600 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{grade}</span>
+                      <span className="bg-emerald-50 text-emerald-700 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{currentUnit.duration || '2-3 weeks'}</span>
+                    </div>
+                    {currentUnit.standards && currentUnit.standards.map((std, i) => (
+                      <div key={i} className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg mr-2">
+                        <BookmarkIcon className="w-4 h-4 text-amber-600" />
+                        <span className="text-xs font-bold text-amber-800">{std}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-10">
+                    {/* Big Ideas */}
+                    {currentUnit.bigIdeas && (
+                      <section className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                        <h2 className="text-xs font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+                          <LightBulbIcon className="w-5 h-5"/> Big Ideas
+                        </h2>
+                        <ul className="space-y-2">
+                          {currentUnit.bigIdeas.map((idea, i) => (
+                            <li key={i} className="text-slate-700 font-medium">• {idea}</li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {/* Essential Questions */}
+                    {currentUnit.essentialQuestions && (
+                      <section>
+                        <h2 className="text-xs font-black text-orange-500 uppercase tracking-widest flex items-center gap-2 mb-4">
+                          <ChatBubbleLeftRightIcon className="w-5 h-5"/> Essential Questions
+                        </h2>
+                        <ul className="space-y-2">
+                          {currentUnit.essentialQuestions.map((q, i) => (
+                            <li key={i} className="text-sm font-medium text-slate-700 bg-orange-50/50 p-3 rounded-xl border border-orange-100">{q}</li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {/* Vocabulary */}
+                    {currentUnit.vocabulary && (
+                      <section>
+                        <h2 className="text-xs font-black text-purple-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+                          <BookOpenIcon className="w-5 h-5"/> Key Vocabulary
+                        </h2>
+                        <div className="flex flex-wrap gap-2">
+                          {currentUnit.vocabulary.map((term, i) => (
+                            <span key={i} className="bg-purple-50 text-purple-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-purple-100">{term}</span>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Lessons Timeline */}
+                    {currentUnit.lessons && (
+                      <section>
+                        <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 mb-6">
+                          <ClockIcon className="w-5 h-5"/> Lesson Sequence ({currentUnit.lessons.length} Lessons)
+                        </h2>
+                        <div className="space-y-4">
+                          {currentUnit.lessons.map((lesson, i) => (
+                            <div key={i} className="border border-slate-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+                              <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                  {lesson.lessonNumber}
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="font-bold text-slate-800 mb-1">{lesson.title}</h3>
+                                  <p className="text-xs text-slate-500 mb-2">{lesson.duration} • {lesson.objective?.substring(0, 100)}...</p>
+                                  <div className="flex flex-wrap gap-2 mb-2">
+                                    {lesson.keyActivities?.map((activity, j) => (
+                                      <span key={j} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded">{activity}</span>
+                                    ))}
+                                  </div>
+                                  {lesson.homework && (
+                                    <p className="text-xs text-slate-400">📝 {lesson.homework}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Culminating Assessment */}
+                    {currentUnit.culminatingAssessment && (
+                      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-2xl">
+                        <h2 className="font-bold text-xl mb-4 flex items-center gap-2">
+                          <AcademicCapIcon className="w-6 h-6"/> Culminating Assessment
+                        </h2>
+                        <h3 className="font-bold text-lg mb-2">{currentUnit.culminatingAssessment.title}</h3>
+                        <p className="text-blue-100 mb-4">{currentUnit.culminatingAssessment.description}</p>
+                        {currentUnit.culminatingAssessment.rubric && (
+                          <div className="bg-white/10 rounded-lg p-4">
+                            <p className="text-xs font-bold uppercase mb-2">Rubric</p>
+                            <ul className="space-y-1 text-sm">
+                              {currentUnit.culminatingAssessment.rubric.map((criteria, i) => (
+                                <li key={i}>• {criteria}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </section>
+                    )}
+
+                    {/* Differentiation */}
+                    {currentUnit.differentiation && (
+                      <section className="p-8 bg-slate-900 rounded-2xl text-slate-300">
+                        <h2 className="text-white font-bold mb-6 flex items-center gap-2 text-xl">
+                          <PuzzlePieceIcon className="w-6 h-6 text-indigo-400"/> Differentiation Strategies
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                          {Object.entries(currentUnit.differentiation).map(([key, value]) => (
+                            <div key={key}>
+                              <h4 className="text-[11px] text-indigo-300 font-black mb-2 uppercase">
+                                {key === 'approaching' ? '🟢 Approaching' : key === 'advanced' ? '🔴 Advanced' : key === 'ell' ? '🌐 ELL Support' : '🟡 On-Level'}
+                              </h4>
+                              <p className="leading-relaxed">{value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
             {/* Empty state */}
-            {!currentPlan && !isGenerating && (
+            {!currentPlan && !currentUnit && !isGenerating && (
               <div className="text-center py-20 text-slate-400">
                 <SparklesIcon className="w-16 h-16 mx-auto mb-4 opacity-20" />
                 <p className="text-lg font-bold">Enter a topic above to generate your lesson plan</p>
