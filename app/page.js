@@ -121,6 +121,9 @@ export default function EduSparkPro() {
   const [currentUnit, setCurrentUnit] = useState(null);
   const [googleUser, setGoogleUser] = useState(null);
   const [exportToast, setExportToast] = useState(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState('');
+  const [generatingStatus, setGeneratingStatus] = useState('');
 
   const contentRef = useRef(null);
 
@@ -331,19 +334,39 @@ export default function EduSparkPro() {
     setCurrentPlan(null);
     setCurrentId(null);
 
+    // Streaming-style status messages
+    const statusMessages = [
+      `Analyzing ${standard} standards...`,
+      "Mapping exact curriculum codes...",
+      "Designing Bloom's Taxonomy sequence...",
+      "Writing verbatim teacher scripts...",
+      "Crafting Socratic questions by DOK level...",
+      "Building minute-by-minute pacing guide...",
+      "Aligning to Danielson Framework Domain 3...",
+      "Generating differentiation strategies...",
+      "Finalizing assessment rubric...",
+    ];
+    let statusIdx = 0;
+    setGeneratingStatus(statusMessages[0]);
+    const statusInterval = setInterval(() => {
+      statusIdx = (statusIdx + 1) % statusMessages.length;
+      setGeneratingStatus(statusMessages[statusIdx]);
+    }, 1800);
+
     const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools. 
 
-Generate a comprehensive, publication-quality lesson plan that would impress a principal during an observation.
+Generate a comprehensive, publication-quality lesson plan that would impress a principal during a formal Danielson Framework observation.
 
 CRITICAL REQUIREMENTS:
 1. Use precise educational terminology (Bloom's Taxonomy, DOK levels, formative/summative assessment)
 2. Include VERBATIM teacher scripts - what the teacher actually says word-for-word, in quotes
 3. Provide Socratic questioning sequences that scaffold from low to high cognitive demand
-4. Include specific standard codes (e.g., CCSS.ELA-LITERACY.RI.5.3)
+4. Include EXACT standard codes (e.g., CCSS.ELA-LITERACY.RI.5.3, CCSS.Math.Content.4.OA.A.1, NGSS 5-PS1-1)
 5. List ALL materials needed with quantities
 6. Provide precise pacing (down to the minute) for a 45-50 minute class
 7. Include pre-class preparation and homework extension
-8. Address common misconceptions with specific examples
+8. Address common misconceptions with specific correction strategies
+9. Include explicit Danielson Framework Domain 3 alignment notes
 
 The output must be detailed enough that a substitute teacher could teach this lesson successfully.`;
 
@@ -356,10 +379,12 @@ The output must be detailed enough that a substitute teacher could teach this le
 Return a JSON object with this exact structure:
 {
   "topic": "Engaging, creative lesson title",
-  "standardCode": "Specific standard code like CCSS.ELA-LITERACY.RI.5.3",
+  "standardCode": "EXACT standard code e.g. CCSS.ELA-LITERACY.RI.5.3 or CCSS.Math.Content.4.OA.A.1 or NGSS 5-PS1-1",
+  "standardDescription": "One sentence: how this lesson specifically addresses this standard",
+  "additionalStandards": ["Additional standard code if applicable"],
   "objective": "SWBAT... (use strong Bloom's verb like analyze, evaluate, create)",
-  "dokLevel": "Depth of Knowledge level (1-4)",
-  "bloomsLevel": "Bloom's Taxonomy level (Remember, Understand, Apply, Analyze, Evaluate, Create)",
+  "dokLevel": "DOK Level 1-4 with brief rationale",
+  "bloomsLevel": "Bloom's Taxonomy level (Remember/Understand/Apply/Analyze/Evaluate/Create)",
   "essentialQuestions": ["Overarching question 1", "Overarching question 2"],
   "learningTargets": ["Students will be able to...", "Students will understand that..."],
   "misconceptions": [
@@ -434,6 +459,11 @@ Return a JSON object with this exact structure:
     "summative": "Exit ticket or end-of-lesson assessment with specific question",
     "successCriteria": ["Student can...", "Student demonstrates...", "Student explains..."]
   },
+  "danielsonAlignment": {
+    "domain": "Domain 3: Instruction",
+    "components": ["3a: Communicating with Students", "3b: Questioning & Discussion Techniques", "3c: Engaging Students in Learning"],
+    "evidence": "Specific evidence of how this lesson demonstrates Distinguished/Proficient performance: explain how the teacher script demonstrates 3a, how Socratic questions demonstrate 3b, and how I Do/We Do/You Do structure demonstrates 3c. Be specific and detailed (3-4 sentences)."
+  },
   "homework": "Extension activity or homework assignment connected to the lesson",
   "reflectionPrompts": ["What went well?", "What would you change?", "Which students need follow-up?"]
 }`;
@@ -456,6 +486,8 @@ Return a JSON object with this exact structure:
       console.error("Generation Error:", err);
       alert("Failed to reach the AI expert. Please check your API configuration or terminal logs.");
     } finally {
+      clearInterval(statusInterval);
+      setGeneratingStatus('');
       setIsGenerating(false);
     }
   };
@@ -587,6 +619,58 @@ Return a JSON object with this exact structure:
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans">
+      {/* Paywall Modal */}
+      {showPaywall && (
+        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 relative">
+            <button
+              onClick={() => setShowPaywall(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <SparklesIcon className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 mb-2">Unlock Pro Features</h2>
+              <p className="text-slate-500 text-sm">
+                <span className="font-bold text-slate-700">{paywallFeature}</span> is a Pro feature.
+                Upgrade to generate student materials, unit plans, and more.
+              </p>
+            </div>
+            <div className="space-y-3 mb-6">
+              {[
+                "📋 Full Unit Plans (8-12 lessons)",
+                "📄 Student Worksheets & Guided Notes",
+                "📊 Leveled Reading Materials (3 Lexile levels)",
+                "📝 Google Forms Quiz Export",
+                "🎯 Danielson & Marzano Framework Alignment",
+                "💾 Cloud Library (unlimited saves)",
+              ].map((feature, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm text-slate-700">
+                  <span>{feature}</span>
+                </div>
+              ))}
+            </div>
+            <div className="text-center text-xs text-slate-400 mb-4">
+              🎁 First 100 teachers get <span className="font-black text-orange-500">50% off</span> — $4.99/mo
+            </div>
+            <a
+              href="/waitlist"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm block text-center hover:opacity-90 transition-opacity"
+            >
+              Join Waitlist — Get Early Access
+            </a>
+            <button
+              onClick={() => setShowPaywall(false)}
+              className="w-full text-slate-400 text-xs py-2 mt-2 hover:text-slate-600"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
       {/* Toast */}
       {saveToast && (
         <div className="fixed top-4 right-4 z-[100] bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
@@ -621,12 +705,13 @@ Return a JSON object with this exact structure:
               <DocumentTextIcon className="w-3.5 h-3.5" /> Single Lesson
             </button>
             <button
-              onClick={() => setMode('unit')}
+              onClick={() => { setPaywallFeature('Unit Plan'); setShowPaywall(true); setMode('lesson'); }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 mode === 'unit' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
               <Squares2X2Icon className="w-3.5 h-3.5" /> Unit Plan
+              <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black ml-1">PRO</span>
             </button>
           </div>
           
@@ -779,18 +864,38 @@ Return a JSON object with this exact structure:
                 className="flex-1 px-4 py-3 outline-none font-medium text-slate-800"
               />
               <button
-                onClick={mode === 'lesson' ? handleGenerate : handleGenerateUnit} disabled={isGenerating}
+                onClick={mode === 'lesson' ? handleGenerate : () => { setPaywallFeature('Unit Plan Generator'); setShowPaywall(true); }} disabled={isGenerating}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {isGenerating ? (mode === 'lesson' ? "Drafting Plan..." : "Creating Unit...") : (mode === 'lesson' ? "Generate Lesson ✨" : "Generate Unit 📚")}
               </button>
+              {currentPlan && !isGenerating && (
+                <button
+                  onClick={() => { setPaywallFeature('Student Worksheet Generator'); setShowPaywall(true); }}
+                  className="flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-700 px-5 py-3 rounded-xl font-bold hover:bg-amber-100 transition-colors text-sm"
+                >
+                  🔒 Generate Worksheet
+                  <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>
+                </button>
+              )}
             </div>
 
             {/* Loading skeleton */}
             {isGenerating && (
-              <div className="space-y-4 animate-pulse">
+              <div className="space-y-4">
+                {/* Status message */}
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 animate-pulse">
+                    <SparklesIcon className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-blue-800 uppercase tracking-widest mb-1">AI Expert at Work</p>
+                    <p className="text-sm font-medium text-blue-700 transition-all duration-500">{generatingStatus}</p>
+                  </div>
+                </div>
+                {/* Skeleton cards */}
                 {[1,2,3].map(i => (
-                  <div key={i} className="bg-white rounded-3xl p-8 border border-slate-100">
+                  <div key={i} className="bg-white rounded-3xl p-8 border border-slate-100 animate-pulse">
                     <div className="h-4 bg-slate-200 rounded w-1/3 mb-4"></div>
                     <div className="h-3 bg-slate-100 rounded w-full mb-2"></div>
                     <div className="h-3 bg-slate-100 rounded w-4/5"></div>
@@ -997,6 +1102,49 @@ Return a JSON object with this exact structure:
                             multiline
                             className="font-medium text-slate-800 text-lg max-w-2xl mx-auto block"
                           />
+                        )}
+                      </section>
+                    )}
+
+                    {/* Danielson Framework Alignment */}
+                    {currentPlan.danielsonAlignment && (
+                      <section className="bg-gradient-to-br from-indigo-900 to-purple-900 p-8 rounded-3xl text-white">
+                        <h2 className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                          <CheckBadgeIcon className="w-4 h-4" /> Danielson Framework Alignment
+                        </h2>
+                        <p className="text-sm font-bold text-indigo-200 mb-3">{currentPlan.danielsonAlignment.domain}</p>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {currentPlan.danielsonAlignment.components?.map((c, i) => (
+                            <span key={i} className="text-[10px] bg-indigo-800 text-indigo-200 px-3 py-1 rounded-full font-bold">
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-sm text-indigo-100 leading-relaxed">{currentPlan.danielsonAlignment.evidence}</p>
+                        <div className="mt-4 text-[10px] text-indigo-400 font-bold uppercase tracking-widest">
+                          ✓ Ready for formal observation
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Standard Codes callout */}
+                    {currentPlan.standardCode && (
+                      <section className="bg-emerald-50 border border-emerald-200 p-6 rounded-2xl">
+                        <h2 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <CheckBadgeIcon className="w-4 h-4" /> Standards Alignment
+                        </h2>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <span className="font-mono text-sm font-black bg-emerald-600 text-white px-3 py-1 rounded-lg">
+                            {currentPlan.standardCode}
+                          </span>
+                          {currentPlan.additionalStandards?.map((s, i) => (
+                            <span key={i} className="font-mono text-sm font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-lg">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                        {currentPlan.standardDescription && (
+                          <p className="text-sm text-emerald-800 italic">{currentPlan.standardDescription}</p>
                         )}
                       </section>
                     )}
