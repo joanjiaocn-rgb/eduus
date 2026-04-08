@@ -124,6 +124,8 @@ export default function EduSparkPro() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState('');
   const [generatingStatus, setGeneratingStatus] = useState('');
+  const [isPro, setIsPro] = useState(false);
+  const [lessonCount, setLessonCount] = useState(0);
   const [currentWorksheet, setCurrentWorksheet] = useState(null);
   const [isGeneratingWorksheet, setIsGeneratingWorksheet] = useState(false);
   const [currentLeveledTexts, setCurrentLeveledTexts] = useState(null);
@@ -137,6 +139,19 @@ export default function EduSparkPro() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) setHistory(JSON.parse(saved));
+    } catch (e) {}
+  }, []);
+
+  // Load subscription status
+  useEffect(() => {
+    try {
+      const pro = localStorage.getItem('eduspark_pro');
+      if (pro) {
+        const { active } = JSON.parse(pro);
+        if (active) setIsPro(true);
+      }
+      const count = parseInt(localStorage.getItem('eduspark_lesson_count') || '0', 10);
+      setLessonCount(count);
     } catch (e) {}
   }, []);
 
@@ -335,6 +350,14 @@ export default function EduSparkPro() {
 
   const handleGenerate = async () => {
     if (!topic.trim()) return alert("Please enter a lesson topic.");
+
+    // Free tier: max 3 lessons/month
+    if (!isPro && lessonCount >= 3) {
+      setPaywallFeature('Unlimited Lesson Plans');
+      setShowPaywall(true);
+      return;
+    }
+
     setIsGenerating(true);
     setCurrentPlan(null);
     setCurrentId(null);
@@ -487,6 +510,12 @@ Return a JSON object with this exact structure:
       // Auto-save after generation
       const newId = saveCurrentPlan(data, Date.now().toString());
       setCurrentId(newId);
+      // Track lesson count for free tier
+      if (!isPro) {
+        const newCount = lessonCount + 1;
+        setLessonCount(newCount);
+        localStorage.setItem('eduspark_lesson_count', String(newCount));
+      }
     } catch (err) {
       console.error("Generation Error:", err);
       alert("Failed to reach the AI expert. Please check your API configuration or terminal logs.");
@@ -796,13 +825,13 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
               ))}
             </div>
             <div className="text-center text-xs text-slate-400 mb-4">
-              🎁 First 100 teachers get <span className="font-black text-orange-500">50% off</span> — $4.99/mo
+              🔒 <span className="font-black text-slate-700">$9.99/month</span> · Cancel anytime · Secure via Stripe
             </div>
             <a
-              href="/waitlist"
+              href="/pricing"
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm block text-center hover:opacity-90 transition-opacity"
             >
-              Join Waitlist — Get Early Access
+              Upgrade to Pro — $9.99/mo →
             </a>
             <button
               onClick={() => setShowPaywall(false)}
@@ -833,7 +862,11 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
         <div className="flex items-center gap-2">
           <SparklesIcon className="w-6 h-6 text-blue-600" />
           <span className="text-2xl font-black tracking-tight">EduSpark AI</span>
-          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold ml-2">PRO</span>
+          {isPro ? (
+            <span className="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-0.5 rounded-full font-bold ml-2">PRO</span>
+          ) : (
+            <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold ml-2">FREE {lessonCount}/3</span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {/* Mode Toggle */}
@@ -904,6 +937,11 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
           )}
           
           <div className="text-[10px] font-black bg-slate-900 text-white px-3 py-1 rounded-full uppercase">Expert Mode</div>
+          {!isPro && (
+            <a href="/pricing" className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity">
+              Upgrade to Pro →
+            </a>
+          )}
         </div>
       </nav>
 
@@ -1299,25 +1337,31 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
             {currentPlan && !isGenerating && (
               <div className="flex flex-wrap gap-3 mb-6">
                 <button
-                  onClick={handleGenerateWorksheet}
+                  onClick={() => {
+                    if (!isPro) { setPaywallFeature('Student Worksheet Generator'); setShowPaywall(true); return; }
+                    handleGenerateWorksheet();
+                  }}
                   disabled={isGeneratingWorksheet || isGeneratingLeveledTexts}
-                  className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm"
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
                 >
                   {isGeneratingWorksheet ? (
                     <><span className="animate-spin">⏳</span> Generating Worksheet...</>
                   ) : (
-                    <>📝 Generate Worksheet <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-black">PRO</span></>
+                    <>{isPro ? '📝' : '🔒'} Generate Worksheet {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
                   )}
                 </button>
                 <button
-                  onClick={handleGenerateLeveledTexts}
+                  onClick={() => {
+                    if (!isPro) { setPaywallFeature('Leveled Texts Generator'); setShowPaywall(true); return; }
+                    handleGenerateLeveledTexts();
+                  }}
                   disabled={isGeneratingWorksheet || isGeneratingLeveledTexts}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm"
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
                 >
                   {isGeneratingLeveledTexts ? (
                     <><span className="animate-spin">⏳</span> Generating Leveled Texts...</>
                   ) : (
-                    <>📚 Leveled Texts <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-black">PRO</span></>
+                    <>{isPro ? '📚' : '🔒'} Leveled Texts {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
                   )}
                 </button>
               </div>
