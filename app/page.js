@@ -124,8 +124,13 @@ export default function EduSparkPro() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState('');
   const [generatingStatus, setGeneratingStatus] = useState('');
+  const [currentWorksheet, setCurrentWorksheet] = useState(null);
+  const [isGeneratingWorksheet, setIsGeneratingWorksheet] = useState(false);
+  const [currentLeveledTexts, setCurrentLeveledTexts] = useState(null);
+  const [isGeneratingLeveledTexts, setIsGeneratingLeveledTexts] = useState(false);
 
   const contentRef = useRef(null);
+  const worksheetRef = useRef(null);
 
   // Load history from localStorage
   useEffect(() => {
@@ -586,6 +591,143 @@ Return a JSON object with this exact structure:
     }
   };
 
+  // Generate Student Worksheet
+  const handleGenerateWorksheet = async () => {
+    if (!currentPlan) return;
+    setIsGeneratingWorksheet(true);
+    setCurrentWorksheet(null);
+
+    const systemPrompt = `You are an experienced curriculum designer. Create a student-facing worksheet that matches the lesson plan provided. The worksheet should be classroom-ready and pedagogically sound.
+
+Return ONLY valid JSON (no markdown fences) in this exact structure:
+{
+  "title": "Worksheet: [topic]",
+  "grade": "Grade X",
+  "subject": "...",
+  "sections": [
+    {
+      "type": "vocabulary",
+      "title": "Vocabulary Match",
+      "items": [{"word": "term", "definition": "meaning"}]
+    },
+    {
+      "type": "fill_blank",
+      "title": "Fill in the Blank",
+      "sentences": [{"text": "The ___ is important because...", "answer": "word"}]
+    },
+    {
+      "type": "comprehension",
+      "title": "Reading Check",
+      "questions": [{"question": "What is...?", "lines": 3}]
+    },
+    {
+      "type": "short_answer",
+      "title": "Think & Write",
+      "questions": [{"question": "Explain why...", "lines": 5}]
+    },
+    {
+      "type": "exit_ticket",
+      "title": "Exit Ticket",
+      "prompt": "Today I learned...",
+      "lines": 3
+    }
+  ]
+}
+
+Include 6-8 vocabulary terms, 5 fill-in-the-blank sentences, 3 comprehension questions, 2 short answer prompts, and 1 exit ticket. Make content age-appropriate for the grade level.`;
+
+    const userPrompt = `Generate a student worksheet for this lesson:
+Topic: ${currentPlan.topic}
+Grade: ${grade}
+Subject: ${subject}
+Objective: ${currentPlan.objective}
+Key Vocabulary: ${currentPlan.vocabulary?.join(', ') || 'see lesson plan'}
+
+Make it engaging, pedagogically sound, and directly tied to the lesson content.`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt })
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      setCurrentWorksheet(data);
+    } catch (err) {
+      console.error('Worksheet Error:', err);
+      alert('Failed to generate worksheet. Please try again.');
+    } finally {
+      setIsGeneratingWorksheet(false);
+    }
+  };
+
+  // Generate Leveled Texts
+  const handleGenerateLeveledTexts = async () => {
+    if (!currentPlan) return;
+    setIsGeneratingLeveledTexts(true);
+    setCurrentLeveledTexts(null);
+
+    const systemPrompt = `You are an expert in differentiated literacy instruction. Generate three reading passages at different Lexile levels about the lesson topic.
+
+Return ONLY valid JSON (no markdown fences) in this exact structure:
+{
+  "topic": "...",
+  "levels": [
+    {
+      "level": "Approaching",
+      "lexile": "400-500L",
+      "emoji": "🟢",
+      "color": "green",
+      "text": "150-200 word passage with simple vocabulary, short sentences, and concrete concepts",
+      "questions": ["Simple question 1?", "Simple question 2?", "Simple question 3?"]
+    },
+    {
+      "level": "On-Level",
+      "lexile": "600-700L",
+      "emoji": "🟡",
+      "color": "yellow",
+      "text": "200-250 word passage with standard vocabulary and varied sentence structure",
+      "questions": ["Standard question 1?", "Standard question 2?", "Standard question 3?"]
+    },
+    {
+      "level": "Advanced",
+      "lexile": "800-900L",
+      "emoji": "🔴",
+      "color": "red",
+      "text": "250-300 word passage with academic vocabulary, complex sentences, and nuanced ideas",
+      "questions": ["Higher-order question 1?", "Higher-order question 2?", "Higher-order question 3?"]
+    }
+  ]
+}
+
+Each passage should cover the SAME core content but at different complexity levels. Questions should match the reading level (literal → inferential → analytical).`;
+
+    const userPrompt = `Generate three leveled reading passages about:
+Topic: ${currentPlan.topic}
+Grade: ${grade}
+Subject: ${subject}
+Key concepts from lesson: ${currentPlan.objective}
+
+Ensure each passage is factually accurate, engaging, and clearly differentiated in complexity.`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt })
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      setCurrentLeveledTexts(data);
+    } catch (err) {
+      console.error('Leveled Texts Error:', err);
+      alert('Failed to generate leveled texts. Please try again.');
+    } finally {
+      setIsGeneratingLeveledTexts(false);
+    }
+  };
+
   // Update a field in currentPlan and persist
   const updatePlan = useCallback((updater) => {
     setCurrentPlan(prev => {
@@ -871,11 +1013,11 @@ Return a JSON object with this exact structure:
               </button>
               {currentPlan && !isGenerating && (
                 <button
-                  onClick={() => { setPaywallFeature('Student Worksheet Generator'); setShowPaywall(true); }}
-                  className="flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-700 px-5 py-3 rounded-xl font-bold hover:bg-amber-100 transition-colors text-sm"
+                  onClick={handleGenerateWorksheet}
+                  disabled={isGeneratingWorksheet}
+                  className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm"
                 >
-                  🔒 Generate Worksheet
-                  <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>
+                  {isGeneratingWorksheet ? '⏳ Generating...' : '📝 Worksheet'}
                 </button>
               )}
             </div>
@@ -1148,6 +1290,146 @@ Return a JSON object with this exact structure:
                         )}
                       </section>
                     )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PRO Feature Buttons */}
+            {currentPlan && !isGenerating && (
+              <div className="flex flex-wrap gap-3 mb-6">
+                <button
+                  onClick={handleGenerateWorksheet}
+                  disabled={isGeneratingWorksheet || isGeneratingLeveledTexts}
+                  className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm"
+                >
+                  {isGeneratingWorksheet ? (
+                    <><span className="animate-spin">⏳</span> Generating Worksheet...</>
+                  ) : (
+                    <>📝 Generate Worksheet <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-black">PRO</span></>
+                  )}
+                </button>
+                <button
+                  onClick={handleGenerateLeveledTexts}
+                  disabled={isGeneratingWorksheet || isGeneratingLeveledTexts}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm"
+                >
+                  {isGeneratingLeveledTexts ? (
+                    <><span className="animate-spin">⏳</span> Generating Leveled Texts...</>
+                  ) : (
+                    <>📚 Leveled Texts <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-black">PRO</span></>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Worksheet Display */}
+            {currentWorksheet && !isGeneratingWorksheet && (
+              <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
+                <div className="px-8 py-4 border-b bg-emerald-50 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest flex items-center gap-2">
+                    📝 Student Worksheet
+                  </span>
+                  <button
+                    onClick={() => { const el = worksheetRef.current; if (el) window.print(); }}
+                    className="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 flex items-center gap-2"
+                  >
+                    <DocumentArrowDownIcon className="w-4 h-4" /> Print Worksheet
+                  </button>
+                </div>
+                <div className="p-8 md:p-12 space-y-8" ref={worksheetRef}>
+                  <div className="text-center border-b-2 border-slate-900 pb-4">
+                    <h2 className="text-2xl font-black text-slate-900">{currentWorksheet.title}</h2>
+                    <p className="text-sm text-slate-500 mt-1">Name: _________________________ Date: _____________ Period: _____</p>
+                  </div>
+                  {currentWorksheet.sections?.map((section, si) => (
+                    <div key={si} className="space-y-4">
+                      <h3 className="font-black text-slate-800 uppercase text-sm tracking-widest border-b border-slate-200 pb-2">
+                        {String.fromCharCode(65 + si)}. {section.title}
+                      </h3>
+                      {section.type === 'vocabulary' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {section.items?.map((item, i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                              <span className="font-bold text-blue-700 min-w-[120px]">{item.word}</span>
+                              <span className="text-slate-400">→</span>
+                              <span className="text-slate-300 text-sm">{item.definition.replace(/./g, '_').substring(0, 30)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {section.type === 'fill_blank' && (
+                        <div className="space-y-4">
+                          {section.sentences?.map((item, i) => (
+                            <p key={i} className="text-slate-700">{i + 1}. {item.text}</p>
+                          ))}
+                        </div>
+                      )}
+                      {(section.type === 'comprehension' || section.type === 'short_answer') && (
+                        <div className="space-y-6">
+                          {section.questions?.map((item, i) => (
+                            <div key={i}>
+                              <p className="font-medium text-slate-700 mb-2">{i + 1}. {typeof item === 'string' ? item : item.question}</p>
+                              <div className="space-y-2">
+                                {Array.from({ length: typeof item === 'object' ? item.lines : 3 }).map((_, li) => (
+                                  <div key={li} className="border-b border-slate-300 h-7" />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {section.type === 'exit_ticket' && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                          <p className="font-medium text-amber-800 mb-4">🎟️ {section.prompt}</p>
+                          <div className="space-y-2">
+                            {Array.from({ length: section.lines || 3 }).map((_, li) => (
+                              <div key={li} className="border-b border-amber-300 h-7" />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Leveled Texts Display */}
+            {currentLeveledTexts && !isGeneratingLeveledTexts && (
+              <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
+                <div className="px-8 py-4 border-b bg-blue-50 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">
+                    📚 Leveled Reading Texts — {currentLeveledTexts.topic}
+                  </span>
+                </div>
+                <div className="p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {currentLeveledTexts.levels?.map((level, i) => {
+                      const colorMap = {
+                        green: { bg: 'bg-emerald-50', border: 'border-emerald-200', badge: 'bg-emerald-600', text: 'text-emerald-800', q: 'bg-emerald-100' },
+                        yellow: { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-500', text: 'text-amber-800', q: 'bg-amber-100' },
+                        red: { bg: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-600', text: 'text-red-800', q: 'bg-red-100' },
+                      };
+                      const c = colorMap[level.color] || colorMap.yellow;
+                      return (
+                        <div key={i} className={`${c.bg} ${c.border} border-2 rounded-2xl p-5 flex flex-col`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className={`${c.badge} text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase`}>
+                              {level.emoji} {level.level}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-500">{level.lexile}</span>
+                          </div>
+                          <p className={`text-sm ${c.text} leading-relaxed mb-4 flex-1`}>{level.text}</p>
+                          <div className={`${c.q} rounded-xl p-4 space-y-2`}>
+                            <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Comprehension Questions</p>
+                            {level.questions?.map((q, qi) => (
+                              <p key={qi} className="text-xs text-slate-700">{qi + 1}. {q}</p>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
