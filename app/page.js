@@ -126,6 +126,7 @@ export default function EduSparkPro() {
   const [generatingStatus, setGeneratingStatus] = useState('');
   const [isPro, setIsPro] = useState(false);
   const [lessonCount, setLessonCount] = useState(0);
+  const [lessonTab, setLessonTab] = useState('lesson');
   const [currentWorksheet, setCurrentWorksheet] = useState(null);
   const [isGeneratingWorksheet, setIsGeneratingWorksheet] = useState(false);
   const [currentLeveledTexts, setCurrentLeveledTexts] = useState(null);
@@ -1120,22 +1121,47 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
                   </div>
                 </div>
 
-                <div className="p-10 md:p-16" ref={contentRef}>
-                  {/* Title */}
-                  <div className="mb-12 pb-8 border-b-2 border-slate-100">
-                    <EditableText
-                      value={currentPlan.topic}
-                      onChange={val => updatePlan(p => ({ ...p, topic: val }))}
-                      className="text-4xl md:text-5xl font-black leading-tight text-slate-900 block mb-6"
-                    />
-                    <div className="flex flex-wrap gap-3">
-                      <span className="bg-blue-100 text-blue-700 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{subject}</span>
-                      <span className="bg-slate-100 text-slate-600 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{grade}</span>
-                      <span className="bg-emerald-50 text-emerald-700 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{standard}</span>
-                    </div>
-                  </div>
+                {/* Tabs */}
+                <div className="border-b border-slate-200 px-8 bg-white flex gap-1">
+                  {[
+                    { id: 'lesson', label: '📄 Lesson Plan', icon: DocumentTextIcon },
+                    { id: 'differentiation', label: '🎯 Differentiation', icon: PuzzlePieceIcon },
+                    { id: 'standards', label: '📊 Standards', icon: CheckBadgeIcon },
+                  ].map(tab => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setLessonTab(tab.id)}
+                        className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-colors -mb-px ${
+                          lessonTab === tab.id
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" /> {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
 
-                  <div className="space-y-12">
+                <div className="p-10 md:p-16" ref={contentRef}>
+                  {lessonTab === 'lesson' && (
+                    <>
+                      <div className="mb-12 pb-8 border-b-2 border-slate-100">
+                        <EditableText
+                          value={currentPlan.topic}
+                          onChange={val => updatePlan(p => ({ ...p, topic: val }))}
+                          className="text-4xl md:text-5xl font-black leading-tight text-slate-900 block mb-6"
+                        />
+                        <div className="flex flex-wrap gap-3">
+                          <span className="bg-blue-100 text-blue-700 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{subject}</span>
+                          <span className="bg-slate-100 text-slate-600 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{grade}</span>
+                          <span className="bg-emerald-50 text-emerald-700 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">{standard}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-12">
                     {/* Objective & Essential Questions */}
                     <section className="grid grid-cols-1 md:grid-cols-2 gap-10">
                       <div className="space-y-4">
@@ -1328,7 +1354,73 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
                         )}
                       </section>
                     )}
-                  </div>
+                      </div>
+                    </>
+                  )}
+
+                  {lessonTab === 'differentiation' && (
+                    <div className="space-y-8">
+                      <div className="text-center mb-8">
+                        <h2 className="text-2xl font-black text-slate-900 mb-2">Differentiation Strategies</h2>
+                        <p className="text-slate-500">Tailored support for every learner</p>
+                      </div>
+                      {currentPlan.differentiation ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {[
+                            { key: 'approaching', label: 'Approaching', color: 'bg-emerald-50 border-emerald-200', badge: 'bg-emerald-600' },
+                            { key: 'onLevel', label: 'On-Level', color: 'bg-amber-50 border-amber-200', badge: 'bg-amber-500' },
+                            { key: 'advanced', label: 'Advanced', color: 'bg-red-50 border-red-200', badge: 'bg-red-600' },
+                            { key: 'ell', label: 'ELL', color: 'bg-blue-50 border-blue-200', badge: 'bg-blue-600' },
+                          ].map(({ key, label, color, badge }) => (
+                            <div key={key} className={`${color} border-2 rounded-2xl p-6`}>
+                              <span className={`${badge} text-white text-[10px] font-black px-3 py-1 rounded-full uppercase`}>{label}</span>
+                              <div className="mt-4">
+                                <EditableText
+                                  value={currentPlan.differentiation[key] || 'No strategy'}
+                                  onChange={val => updatePlan(p => ({ ...p, differentiation: { ...p.differentiation, [key]: val } }))}
+                                  multiline
+                                  className="text-slate-700 text-sm leading-relaxed block"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-center text-slate-400 py-12">No differentiation strategies available</p>
+                      )}
+                    </div>
+                  )}
+
+                  {lessonTab === 'standards' && (
+                    <div className="space-y-8">
+                      <div className="text-center mb-8">
+                        <h2 className="text-2xl font-black text-slate-900 mb-2">Standards & Frameworks</h2>
+                        <p className="text-slate-500">Evidence-based alignment</p>
+                      </div>
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
+                        <h3 className="text-[10px] font-black text-emerald-600 uppercase mb-4">Curriculum Standards</h3>
+                        {currentPlan.standardCode ? (
+                          <div className="space-y-3">
+                            <span className="font-mono text-lg font-black bg-emerald-600 text-white px-4 py-2 rounded-lg">{currentPlan.standardCode}</span>
+                            {currentPlan.standardDescription && <p className="text-emerald-800 italic">{currentPlan.standardDescription}</p>}
+                          </div>
+                        ) : <p className="text-emerald-600">No standard code</p>}
+                      </div>
+                      {currentPlan.danielsonAlignment && (
+                        <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-8 text-white">
+                          <h3 className="text-[10px] font-black text-indigo-300 uppercase mb-4">Danielson Framework</h3>
+                          <p className="text-sm font-bold text-indigo-200 mb-3">{currentPlan.danielsonAlignment.domain}</p>
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {currentPlan.danielsonAlignment.components?.map((c, i) => (
+                              <span key={i} className="text-[10px] bg-indigo-800 text-indigo-200 px-3 py-1 rounded-full font-bold">{c}</span>
+                            ))}
+                          </div>
+                          <p className="text-indigo-100 text-sm">{currentPlan.danielsonAlignment.evidence}</p>
+                          <div className="mt-4 text-emerald-400 text-sm font-bold">✓ Ready for observation</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
