@@ -131,9 +131,12 @@ export default function EduSparkPro() {
   const [isGeneratingWorksheet, setIsGeneratingWorksheet] = useState(false);
   const [currentLeveledTexts, setCurrentLeveledTexts] = useState(null);
   const [isGeneratingLeveledTexts, setIsGeneratingLeveledTexts] = useState(false);
+  const [currentSlides, setCurrentSlides] = useState(null);
+  const [isGeneratingSlides, setIsGeneratingSlides] = useState(false);
 
   const contentRef = useRef(null);
   const worksheetRef = useRef(null);
+  const slidesRef = useRef(null);
 
   // Load history from localStorage
   useEffect(() => {
@@ -755,6 +758,71 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
       alert('Failed to generate leveled texts. Please try again.');
     } finally {
       setIsGeneratingLeveledTexts(false);
+    }
+  };
+
+  // Generate Google Slides Content
+  const handleGenerateSlides = async () => {
+    if (!currentPlan) return;
+    setIsGeneratingSlides(true);
+    setCurrentSlides(null);
+
+    const systemPrompt = `You are an expert Instructional Designer and Presentation Creator for North American K-12 schools.
+Your task is to create a highly engaging, student-facing Slide Deck based on a specific topic.
+
+CRITICAL RULES FOR SLIDES:
+1. "Less is More" on screen: Bullet points must be short and digestible for students (max 6-8 words per bullet).
+2. Speaker Notes are mandatory: Provide the EXACT script the teacher should say while this slide is on screen.
+3. Visual Cues: For every slide, suggest an image, chart, or diagram the teacher could add.
+4. Flow: Must follow the "Hook -> Direct Instruction (I Do) -> Guided Practice (We Do) -> Assessment (Exit Ticket)" flow.
+
+Return strictly a JSON object with this exact structure:
+{
+  "presentationTitle": "Engaging Title Here",
+  "estimatedDuration": "25-30 minutes",
+  "slides": [
+    {
+      "slideNumber": 1,
+      "layout": "TitleSlide",
+      "title": "Main Title",
+      "subtitle": "Subtitle or Grade Level",
+      "speakerNotes": "Welcome class! Today we are going to explore..."
+    },
+    {
+      "slideNumber": 2,
+      "layout": "ContentSlide",
+      "title": "The Hook: [Engaging Question]",
+      "bulletPoints": ["Short bullet 1", "Short bullet 2"],
+      "visualSuggestion": "Describe an image here (e.g., 'A picture of a falling apple')",
+      "speakerNotes": "Teacher script: Have you ever wondered why..."
+    }
+  ]
+}
+Ensure there are at least 8-10 slides covering the entire lesson flow. Make it engaging and age-appropriate for the grade level.`;
+
+    const userPrompt = `Create a presentation for:
+Topic: ${currentPlan.topic}
+Grade: ${grade}
+Subject: ${subject}
+Lesson Objective: ${currentPlan.objective}
+Key Vocabulary: ${currentPlan.vocabulary?.join(', ') || 'See lesson plan'}
+
+Make it engaging, visual, and ready to project in class.`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt })
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      setCurrentSlides(data);
+    } catch (err) {
+      console.error('Slides Error:', err);
+      alert('Failed to generate slides. Please try again.');
+    } finally {
+      setIsGeneratingSlides(false);
     }
   };
 
@@ -1456,6 +1524,20 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
                     <>{isPro ? '📚' : '🔒'} Leveled Texts {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
                   )}
                 </button>
+                <button
+                  onClick={() => {
+                    if (!isPro) { setPaywallFeature('Google Slides Generator'); setShowPaywall(true); return; }
+                    handleGenerateSlides();
+                  }}
+                  disabled={isGeneratingWorksheet || isGeneratingLeveledTexts || isGeneratingSlides}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
+                >
+                  {isGeneratingSlides ? (
+                    <><span className="animate-spin">⏳</span> Generating Slides...</>
+                  ) : (
+                    <>{isPro ? '📽️' : '🔒'} Generate Slides {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
+                  )}
+                </button>
               </div>
             )}
 
@@ -1567,6 +1649,71 @@ Ensure each passage is factually accurate, engaging, and clearly differentiated 
                       );
                     })}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Slides Display */}
+            {currentSlides && !isGeneratingSlides && (
+              <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
+                <div className="px-8 py-4 border-b bg-purple-50 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-purple-700 uppercase tracking-widest">
+                    📽️ Google Slides — {currentSlides.presentationTitle}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { const el = slidesRef.current; if (el) window.print(); }}
+                      className="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-800"
+                    >
+                      Print Slides
+                    </button>
+                    <button
+                      onClick={() => {
+                        const slidesText = currentSlides.slides.map(s => 
+                          `Slide ${s.slideNumber}: ${s.title}\n${s.bulletPoints?.join('\n') || ''}\n\nSpeaker Notes: ${s.speakerNotes}`
+                        ).join('\n\n---\n\n');
+                        navigator.clipboard.writeText(slidesText);
+                        alert('Slides copied! Paste into Google Slides.');
+                      }}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-purple-700"
+                    >
+                      Copy All
+                    </button>
+                  </div>
+                </div>
+                <div className="p-8 space-y-6" ref={slidesRef}>
+                  <p className="text-sm text-slate-500 mb-4">Estimated Duration: {currentSlides.estimatedDuration}</p>
+                  {currentSlides.slides?.map((slide, i) => (
+                    <div key={i} className="border-2 border-slate-200 rounded-2xl p-6 bg-white shadow-sm">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <span className="text-purple-700 font-black">{slide.slideNumber}</span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg text-slate-900 mb-2">{slide.title}</h3>
+                          {slide.subtitle && <p className="text-slate-500 text-sm mb-3">{slide.subtitle}</p>}
+                          {slide.bulletPoints && slide.bulletPoints.length > 0 && (
+                            <ul className="space-y-2 mb-4">
+                              {slide.bulletPoints.map((bp, bi) => (
+                                <li key={bi} className="text-slate-700 text-sm flex items-start gap-2">
+                                  <span className="text-purple-500 mt-1">•</span>{bp}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {slide.visualSuggestion && (
+                            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
+                              <p className="text-xs text-blue-600">🖼️ Visual: {slide.visualSuggestion}</p>
+                            </div>
+                          )}
+                          <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
+                            <p className="text-[10px] font-black text-amber-600 uppercase mb-1">Speaker Notes</p>
+                            <p className="text-sm text-amber-800 italic">"{slide.speakerNotes}"</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
