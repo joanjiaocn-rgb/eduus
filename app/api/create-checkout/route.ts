@@ -3,11 +3,12 @@ export const runtime = 'edge';
 // Stripe test mode keys - replace with real keys after creating Stripe account
 // Get your keys at: https://dashboard.stripe.com/apikeys
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
-const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || 'price_placeholder';
+const STRIPE_PRICE_ID_MONTHLY = process.env.STRIPE_PRICE_ID || 'price_placeholder';
+const STRIPE_PRICE_ID_YEARLY = process.env.STRIPE_PRICE_ID_YEARLY || 'price_yearly_placeholder';
 
 export async function POST(request: Request) {
   try {
-    const { plan } = await request.json();
+    const { plan, billingCycle = 'monthly' } = await request.json();
 
     if (plan !== 'pro') {
       return Response.json({ error: 'Invalid plan' }, { status: 400 });
@@ -21,11 +22,12 @@ export async function POST(request: Request) {
     }
 
     const origin = new URL(request.url).origin;
+    const priceId = billingCycle === 'yearly' ? STRIPE_PRICE_ID_YEARLY : STRIPE_PRICE_ID_MONTHLY;
 
     // Create Stripe Checkout Session via direct API call (Edge Runtime compatible)
     const params = new URLSearchParams({
       'mode': 'subscription',
-      'line_items[0][price]': STRIPE_PRICE_ID,
+      'line_items[0][price]': priceId,
       'line_items[0][quantity]': '1',
       'success_url': `${origin}/pricing/success?session_id={CHECKOUT_SESSION_ID}`,
       'cancel_url': `${origin}/pricing`,

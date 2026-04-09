@@ -9,7 +9,7 @@ import {
   ChatBubbleLeftRightIcon, BeakerIcon, BookOpenIcon, 
   ExclamationTriangleIcon, ClockIcon, TrashIcon,
   PencilSquareIcon, CheckIcon, XMarkIcon, ChevronLeftIcon,
-  Squares2X2Icon, DocumentTextIcon
+  Squares2X2Icon, DocumentTextIcon, BookmarkIcon, LightBulbIcon
 } from '@heroicons/react/24/outline';
 
 const STORAGE_KEY = 'eduspark_lesson_history';
@@ -119,12 +119,13 @@ export default function EduSparkPro() {
   const [saveToast, setSaveToast] = useState(false);
   const [mode, setMode] = useState('lesson'); // 'lesson' | 'unit'
   const [currentUnit, setCurrentUnit] = useState(null);
+  const [unitLessonCount, setUnitLessonCount] = useState(10); // User-defined lesson count for unit
   const [googleUser, setGoogleUser] = useState(null);
   const [exportToast, setExportToast] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState('');
   const [generatingStatus, setGeneratingStatus] = useState('');
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(false); // Default: free tier
   const [lessonCount, setLessonCount] = useState(0);
   const [lessonTab, setLessonTab] = useState('lesson');
   const [currentWorksheet, setCurrentWorksheet] = useState(null);
@@ -151,8 +152,23 @@ export default function EduSparkPro() {
     try {
       const pro = localStorage.getItem('eduspark_pro');
       if (pro) {
-        const { active } = JSON.parse(pro);
-        if (active) setIsPro(true);
+        const { active, sessionId, demo } = JSON.parse(pro);
+        if (active) {
+          setIsPro(true);
+          // Verify session with server if not demo
+          if (!demo && sessionId && sessionId !== 'demo_session') {
+            fetch(`/api/check-session?session_id=${sessionId}`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.status !== 'active') {
+                  // Subscription expired
+                  localStorage.removeItem('eduspark_pro');
+                  setIsPro(false);
+                }
+              })
+              .catch(console.error);
+          }
+        }
       }
       const count = parseInt(localStorage.getItem('eduspark_lesson_count') || '0', 10);
       setLessonCount(count);
@@ -541,14 +557,15 @@ Return a JSON object with this exact structure:
 Generate a comprehensive UNIT PLAN consisting of 8-12 sequential lessons that build upon each other. This should be publication-quality that would impress a principal.
 
 CRITICAL REQUIREMENTS:
-1. Create 8-12 lessons that show clear progression and scaffolding
-2. Each lesson must have specific learning objectives aligned to standards
-3. Include big ideas and essential questions for the entire unit
-4. Provide a culminating assessment/project for the unit
-5. Show how each lesson connects to the next (progression map)
-6. Include vocabulary progression across lessons
-7. Address common misconceptions at the unit level
-8. Provide differentiation strategies for the entire unit
+1. Create lessons based on the topic's complexity and depth - can be 5-15 lessons
+2. Typical US units range from 1-3 weeks, but flexible based on content needs
+3. Each lesson must have specific learning objectives aligned to standards
+4. Include big ideas and essential questions for the entire unit
+5. Provide a culminating assessment/project for the unit
+6. Show how each lesson connects to the next (progression map)
+7. Include vocabulary progression across lessons
+8. Address common misconceptions at the unit level
+9. Provide differentiation strategies for the entire unit
 
 The unit plan must be detailed enough that a substitute teacher could teach any lesson successfully.`;
 
@@ -557,15 +574,15 @@ The unit plan must be detailed enough that a substitute teacher could teach any 
 - Grade: ${grade}
 - Subject: ${subject}
 - Standards Framework: ${standard}
-- Duration: 2-3 weeks (8-12 lessons)
+- Number of Lessons: ${unitLessonCount} lessons (user-specified)
 
-Return a JSON object with this exact structure:
+Return a JSON object with this exact structure. The "lessons" array MUST contain exactly ${unitLessonCount} lessons:
 {
   "unitTitle": "Engaging unit title",
   "bigIdeas": ["Big idea 1", "Big idea 2", "Big idea 3"],
   "essentialQuestions": ["Overarching EQ 1", "Overarching EQ 2"],
   "standards": ["Specific standard code 1", "Specific standard code 2"],
-  "duration": "2-3 weeks (10 lessons)",
+  "duration": "X weeks (${unitLessonCount} lessons)",
   "vocabulary": ["Term 1", "Term 2", "Term 3", "Term 4", "Term 5"],
   "misconceptions": [
     {"misconception": "Common unit-level misconception", "correction": "How to address throughout unit"}
@@ -577,6 +594,7 @@ Return a JSON object with this exact structure:
     "rubric": ["Criteria 1: Exceeds/Meets/Below", "Criteria 2: Exceeds/Meets/Below"]
   },
   "lessons": [
+    // Generate exactly ${unitLessonCount} lessons with lessonNumber 1 through ${unitLessonCount}
     {
       "lessonNumber": 1,
       "title": "Lesson 1 Title",
@@ -584,15 +602,8 @@ Return a JSON object with this exact structure:
       "objective": "SWBAT...",
       "keyActivities": ["Activity 1", "Activity 2"],
       "homework": "Brief homework description"
-    },
-    {
-      "lessonNumber": 2,
-      "title": "Lesson 2 Title",
-      "duration": "45 min",
-      "objective": "SWBAT...",
-      "keyActivities": ["Activity 1", "Activity 2"],
-      "homework": "Brief homework description"
     }
+    // Continue through lesson ${unitLessonCount}
   ],
   "differentiation": {
     "approaching": "Unit-level scaffold for struggling learners",
@@ -601,7 +612,9 @@ Return a JSON object with this exact structure:
     "ell": "ELL strategies for the unit"
   },
   "reflectionPrompts": ["What went well?", "What would you change?"]
-}`;
+}
+
+CRITICAL: You MUST generate exactly ${unitLessonCount} lessons total. Each lesson should build upon the previous one with clear progression and scaffolding. Distribute the content appropriately across all ${unitLessonCount} lessons.`;
 
     try {
       const response = await fetch('/api/generate', {
@@ -826,6 +839,107 @@ Make it engaging, visual, and ready to project in class.`;
     }
   };
 
+  // Generate Google Slides Content for Unit Plan
+  const handleGenerateUnitSlides = async () => {
+    if (!currentUnit) return;
+    setIsGeneratingSlides(true);
+    setCurrentSlides(null);
+
+    const systemPrompt = `You are an expert Instructional Designer and Presentation Creator for North American K-12 schools.
+Your task is to create a comprehensive, student-facing Slide Deck for an entire UNIT (2-3 weeks of instruction).
+
+CRITICAL RULES FOR UNIT SLIDES:
+1. "Less is More" on screen: Bullet points must be short and digestible for students (max 6-8 words per bullet).
+2. Speaker Notes are mandatory: Provide the EXACT script the teacher should say while this slide is on screen.
+3. Visual Cues: For every slide, suggest an image, chart, or diagram the teacher could add.
+4. Flow: Must follow Unit Introduction -> Big Ideas -> Essential Questions -> Vocabulary -> Lesson Overview -> Assessment.
+
+Return strictly a JSON object with this exact structure:
+{
+  "presentationTitle": "Unit Title Here",
+  "estimatedDuration": "2-3 weeks",
+  "slides": [
+    {
+      "slideNumber": 1,
+      "layout": "TitleSlide",
+      "title": "Unit Title",
+      "subtitle": "Grade Level & Subject",
+      "speakerNotes": "Welcome to our new unit! Over the next few weeks, we will explore..."
+    },
+    {
+      "slideNumber": 2,
+      "layout": "ContentSlide",
+      "title": "Big Ideas",
+      "bulletPoints": ["Core concept 1", "Core concept 2", "Core concept 3"],
+      "visualSuggestion": "Concept map or mind map image",
+      "speakerNotes": "These are the big ideas we'll explore throughout this unit..."
+    },
+    {
+      "slideNumber": 3,
+      "layout": "ContentSlide",
+      "title": "Essential Questions",
+      "bulletPoints": ["Question 1?", "Question 2?"],
+      "visualSuggestion": "Question mark graphic or thinking student image",
+      "speakerNotes": "These questions will guide our learning journey..."
+    },
+    {
+      "slideNumber": 4,
+      "layout": "ContentSlide",
+      "title": "Key Vocabulary",
+      "bulletPoints": ["Term 1", "Term 2", "Term 3", "Term 4", "Term 5"],
+      "visualSuggestion": "Word wall or vocabulary cards image",
+      "speakerNotes": "Let's preview the important vocabulary we'll learn..."
+    },
+    {
+      "slideNumber": 5,
+      "layout": "ContentSlide",
+      "title": "Unit Roadmap",
+      "bulletPoints": ["Lesson 1: Topic", "Lesson 2: Topic", "Lesson 3: Topic"],
+      "visualSuggestion": "Roadmap or timeline graphic",
+      "speakerNotes": "Here's our journey through this unit..."
+    },
+    {
+      "slideNumber": 6,
+      "layout": "ContentSlide",
+      "title": "Culminating Assessment",
+      "bulletPoints": ["Project description", "Success criteria"],
+      "visualSuggestion": "Project example or rubric image",
+      "speakerNotes": "At the end of this unit, you will demonstrate your learning by..."
+    }
+  ]
+}
+
+Ensure there are at least 6-8 slides covering the entire unit overview. Make it engaging and age-appropriate for the grade level. Focus on student-facing language (not teacher jargon).`;
+
+    const userPrompt = `Create a unit overview presentation for:
+Unit Title: ${currentUnit.unitTitle}
+Grade: ${grade}
+Subject: ${subject}
+Big Ideas: ${currentUnit.bigIdeas?.join(', ') || 'See unit plan'}
+Essential Questions: ${currentUnit.essentialQuestions?.join(', ') || 'See unit plan'}
+Key Vocabulary: ${currentUnit.vocabulary?.join(', ') || 'See unit plan'}
+Number of Lessons: ${currentUnit.lessons?.length || '8-12'}
+Culminating Assessment: ${currentUnit.culminatingAssessment?.title || 'Final project'}
+
+Make it engaging, visual, and ready to project in class for the unit launch day.`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt })
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      setCurrentSlides(data);
+    } catch (err) {
+      console.error('Unit Slides Error:', err);
+      alert('Failed to generate unit slides. Please try again.');
+    } finally {
+      setIsGeneratingSlides(false);
+    }
+  };
+
   // Update a field in currentPlan and persist
   const updatePlan = useCallback((updater) => {
     setCurrentPlan(prev => {
@@ -932,7 +1046,24 @@ Make it engaging, visual, and ready to project in class.`;
           <SparklesIcon className="w-6 h-6 text-blue-600" />
           <span className="text-2xl font-black tracking-tight">EduSpark AI</span>
           {isPro ? (
-            <span className="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-0.5 rounded-full font-bold ml-2">PRO</span>
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/customer-portal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId: 'demo_customer' }),
+                  });
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                } catch (err) {
+                  console.error('Portal error:', err);
+                }
+              }}
+              className="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-0.5 rounded-full font-bold ml-2 hover:opacity-90 transition-opacity"
+            >
+              PRO
+            </button>
           ) : (
             <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold ml-2">FREE {lessonCount}/3</span>
           )}
@@ -941,7 +1072,7 @@ Make it engaging, visual, and ready to project in class.`;
           {/* Mode Toggle */}
           <div className="flex items-center bg-slate-100 rounded-lg p-1">
             <button
-              onClick={() => setMode('lesson')}
+              onClick={() => { setMode('lesson'); setCurrentUnit(null); }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 mode === 'lesson' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
@@ -949,13 +1080,13 @@ Make it engaging, visual, and ready to project in class.`;
               <DocumentTextIcon className="w-3.5 h-3.5" /> Single Lesson
             </button>
             <button
-              onClick={() => { setPaywallFeature('Unit Plan'); setShowPaywall(true); setMode('lesson'); }}
+              onClick={() => { setMode('unit'); setCurrentPlan(null); if (!isPro) { setPaywallFeature('Unit Plan'); setShowPaywall(true); } }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 mode === 'unit' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
               <Squares2X2Icon className="w-3.5 h-3.5" /> Unit Plan
-              <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black ml-1">PRO</span>
+              {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black ml-1">PRO</span>}
             </button>
           </div>
           
@@ -1081,6 +1212,23 @@ Make it engaging, visual, and ready to project in class.`;
                     <option>Florida NGSSS</option>
                   </select>
                 </div>
+                {mode === 'unit' && (
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Number of Lessons</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="5"
+                        max="15"
+                        value={unitLessonCount}
+                        onChange={(e) => setUnitLessonCount(Math.max(5, Math.min(15, parseInt(e.target.value) || 10)))}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                      />
+                      <span className="text-xs text-slate-500 whitespace-nowrap">lessons</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">Range: 5-15 lessons</p>
+                  </div>
+                )}
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
                   <p className="text-[9px] text-blue-600 font-black uppercase mb-1">Instructional Design</p>
                   <p className="text-[11px] text-blue-800 leading-tight">Using <b>Gradual Release</b> and <b>Bloom's Higher Order Thinking</b> prompts.</p>
@@ -1113,7 +1261,7 @@ Make it engaging, visual, and ready to project in class.`;
                 className="flex-1 px-4 py-3 outline-none font-medium text-slate-800"
               />
               <button
-                onClick={mode === 'lesson' ? handleGenerate : () => { setPaywallFeature('Unit Plan Generator'); setShowPaywall(true); }} disabled={isGenerating}
+                onClick={mode === 'lesson' ? handleGenerate : handleGenerateUnit} disabled={isGenerating}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {isGenerating ? (mode === 'lesson' ? "Drafting Plan..." : "Creating Unit...") : (mode === 'lesson' ? "Generate Lesson ✨" : "Generate Unit 📚")}
@@ -1154,7 +1302,7 @@ Make it engaging, visual, and ready to project in class.`;
             )}
 
             {/* Lesson Plan Display */}
-            {currentPlan && !isGenerating && (
+            {currentPlan && !isGenerating && mode === 'lesson' && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-20">
                 {/* Toolbar */}
                 <div className="px-8 py-4 border-b bg-slate-50 flex justify-between items-center sticky top-0 z-10">
@@ -1494,7 +1642,7 @@ Make it engaging, visual, and ready to project in class.`;
             )}
 
             {/* PRO Feature Buttons */}
-            {currentPlan && !isGenerating && (
+            {currentPlan && !isGenerating && mode === 'lesson' && (
               <div className="flex flex-wrap gap-3 mb-6">
                 <button
                   onClick={() => {
@@ -1719,7 +1867,7 @@ Make it engaging, visual, and ready to project in class.`;
             )}
 
             {/* Unit Plan Display */}
-            {currentUnit && !isGenerating && (
+            {currentUnit && !isGenerating && mode === 'unit' && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-20">
                 {/* Toolbar */}
                 <div className="px-8 py-4 border-b bg-slate-50 flex justify-between items-center sticky top-0 z-10">
@@ -1751,6 +1899,20 @@ Make it engaging, visual, and ready to project in class.`;
                         Google Docs
                       </button>
                     )}
+                    <button
+                      onClick={() => {
+                        if (!isPro) { setPaywallFeature('Google Slides Generator'); setShowPaywall(true); return; }
+                        handleGenerateUnitSlides();
+                      }}
+                      disabled={isGeneratingSlides}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 ${isPro ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
+                    >
+                      {isGeneratingSlides ? (
+                        <><span className="animate-spin">⏳</span> Generating...</>
+                      ) : (
+                        <>{isPro ? '📽️' : '🔒'} Slides {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1 py-0.5 rounded-full font-black ml-1">PRO</span>}</>
+                      )}
+                    </button>
                   </div>
                 </div>
 

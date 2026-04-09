@@ -25,6 +25,7 @@ const PRO_FEATURES = [
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(false);
+  const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'yearly'
   const router = useRouter();
 
   const handleSubscribe = async () => {
@@ -33,7 +34,7 @@ export default function PricingPage() {
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'pro' }),
+        body: JSON.stringify({ plan: 'pro', billingCycle }),
       });
       const data = await res.json();
       if (data.url) {
@@ -113,12 +114,47 @@ export default function PricingPage() {
               </span>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-4">
               <p className="text-xs font-black uppercase tracking-widest text-blue-200 mb-2">Pro</p>
-              <div className="flex items-end gap-1">
-                <span className="text-5xl font-black text-white">$9.99</span>
-                <span className="text-blue-200 mb-2">/month</span>
+              
+              {/* Billing Toggle */}
+              <div className="flex items-center justify-center bg-blue-800/50 rounded-lg p-1 mb-4">
+                <button
+                  onClick={() => setBillingCycle('monthly')}
+                  className={`px-4 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                    billingCycle === 'monthly' 
+                      ? 'bg-white text-blue-700' 
+                      : 'text-blue-200 hover:text-white'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingCycle('yearly')}
+                  className={`px-4 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1 ${
+                    billingCycle === 'yearly' 
+                      ? 'bg-white text-blue-700' 
+                      : 'text-blue-200 hover:text-white'
+                  }`}
+                >
+                  Yearly
+                  <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">Save 20%</span>
+                </button>
               </div>
+
+              <div className="flex items-end gap-1">
+                <span className="text-5xl font-black text-white">
+                  {billingCycle === 'monthly' ? '$9.99' : '$95.90'}
+                </span>
+                <span className="text-blue-200 mb-2">
+                  {billingCycle === 'monthly' ? '/month' : '/year'}
+                </span>
+              </div>
+              {billingCycle === 'yearly' && (
+                <p className="text-emerald-300 text-xs mt-1">
+                  That's just $7.99/month — save $24/year!
+                </p>
+              )}
               <p className="text-blue-200 text-sm mt-2">For professional educators who want more</p>
             </div>
 
