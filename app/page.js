@@ -201,10 +201,28 @@ export default function EduSparkPro() {
 
   // Google Login
   const login = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      console.log('Login Success:', tokenResponse);
-      // 直接使用 tokenResponse 作为用户信息
-      setGoogleUser(tokenResponse);
+    onSuccess: async (tokenResponse) => {
+      // Fetch user profile info
+      try {
+        const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const profile = await profileRes.json();
+        const userWithProfile = { ...tokenResponse, profile };
+        setGoogleUser(userWithProfile);
+
+        // Store Google ID in sessionStorage for subscription binding
+        sessionStorage.setItem('google_user_id', profile.id);
+
+        // Restore subscription status bound to this Google account
+        const savedPro = localStorage.getItem(`eduspark_pro_${profile.id}`);
+        if (savedPro) {
+          const { active } = JSON.parse(savedPro);
+          if (active) setIsPro(true);
+        }
+      } catch (e) {
+        setGoogleUser(tokenResponse);
+      }
     },
     onError: (errorResponse) => {
       console.error('Login Failed:', errorResponse);
@@ -215,6 +233,11 @@ export default function EduSparkPro() {
   const handleLogout = () => {
     googleLogout();
     setGoogleUser(null);
+    // Reset pro status to localStorage-only check on logout
+    try {
+      const pro = localStorage.getItem('eduspark_pro');
+      if (!pro) setIsPro(false);
+    } catch (e) { setIsPro(false); }
   };
 
   // Export to Google Docs
@@ -1010,12 +1033,32 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             <div className="text-center text-xs text-slate-400 mb-4">
               🔒 <span className="font-black text-slate-700">$9.99/month</span> · Cancel anytime · Secure via Stripe
             </div>
+            {!googleUser && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-xs text-amber-800 flex items-center gap-2">
+                <span>💡</span>
+                <span><b>Tip:</b> Sign in with Google first so your subscription syncs across devices.</span>
+              </div>
+            )}
             <a
               href="/pricing"
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm block text-center hover:opacity-90 transition-opacity"
             >
               Upgrade to Pro — $9.99/mo →
             </a>
+            {!googleUser && (
+              <button
+                onClick={() => { setShowPaywall(false); login(); }}
+                className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold mt-2 hover:bg-slate-50"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Sign in with Google first
+              </button>
+            )}
             <button
               onClick={() => setShowPaywall(false)}
               className="w-full text-slate-400 text-xs py-2 mt-2 hover:text-slate-600"

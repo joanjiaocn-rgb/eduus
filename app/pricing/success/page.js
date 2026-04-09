@@ -16,12 +16,22 @@ function SuccessContent() {
 
     // Save subscription status to localStorage
     if (sessionId) {
-      localStorage.setItem('eduspark_pro', JSON.stringify({
+      const proData = {
         active: true,
         sessionId,
         activatedAt: new Date().toISOString(),
         demo: isDemo,
-      }));
+      };
+      // Save to general key
+      localStorage.setItem('eduspark_pro', JSON.stringify(proData));
+
+      // Also save bound to Google ID if user is logged in
+      try {
+        const googleId = sessionStorage.getItem('google_user_id');
+        if (googleId) {
+          localStorage.setItem(`eduspark_pro_${googleId}`, JSON.stringify(proData));
+        }
+      } catch (e) {}
     }
 
     // Countdown redirect
