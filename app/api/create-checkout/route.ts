@@ -1,10 +1,9 @@
 export const runtime = 'edge';
 
-// Stripe test mode keys - replace with real keys after creating Stripe account
-// Get your keys at: https://dashboard.stripe.com/apikeys
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
 const STRIPE_PRICE_ID_MONTHLY = process.env.STRIPE_PRICE_ID || 'price_placeholder';
 const STRIPE_PRICE_ID_YEARLY = process.env.STRIPE_PRICE_ID_YEARLY || 'price_yearly_placeholder';
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     // If no real Stripe key configured, return demo mode response
-    if (STRIPE_SECRET_KEY === 'sk_test_placeholder') {
+    if (STRIPE_SECRET_KEY === 'sk_test_placeholder' || STRIPE_SECRET_KEY.startsWith('sk_test_')) {
       return Response.json({
         url: `${new URL(request.url).origin}/pricing/success?demo=true&session_id=demo_session`,
       });
