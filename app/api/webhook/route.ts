@@ -1,7 +1,43 @@
 export const runtime = 'edge';
+import { Buffer } from 'node:buffer';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+
+async function verifyWebhookSignature(payload: string, signature: string | null, secret: string): Promise<boolean> {
+  if (!signature) return false;
+  
+  // Parse Stripe signature header
+  const parts = signature.split(',');
+  const timestamp = parts.find(p => p.startsWith('t='))?.split('=')[1];
+  const sig = parts.find(p => p.startsWith('v1='))?.split('=')[1];
+  
+  if (!timestamp || !sig) return false;
+  
+  // Check timestamp is within 5 minutes (300s)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > 300) {
+    return false;
+  }
+  
+  // Create signed payload
+  const signedPayload = `${timestamp}.${payload}`;
+  
+  // Compute HMAC signature
+  const encoder = new TextEncoder();
+  const secretKey = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify']
+  );
+  
+  const signatureBuffer = Buffer.from(sig, 'hex');
+  const payloadBuffer = encoder.encode(signedPayload);
+  
+  return crypto.subtle.verify('HMAC', secretKey, signatureBuffer, payloadBuffer);
+}
 
 export async function POST(request: Request) {
   try {
@@ -14,8 +50,16 @@ export async function POST(request: Request) {
       return Response.json({ received: true, demo: true });
     }
 
-    // Verify webhook signature (simplified for Edge Runtime)
-    // In production, use stripe-node library or implement proper signature verification
+    // Verify webhook signature (production mode)
+    if (STRIPE_WEBHOOK_SECRET) {
+      const isValid = await verifyWebhookSignature(payload, signature, STRIPE_WEBHOOK_SECRET);
+      if (!isValid) {
+        console.error('Invalid webhook signature');
+        return Response.json({ error: 'Invalid signature' }, { status: 400 });
+      }
+    } else {
+      console.warn('STRIPE_WEBHOOK_SECRET not set, skipping signature verification');
+    }
     
     // Parse the event
     const event = JSON.parse(payload);
