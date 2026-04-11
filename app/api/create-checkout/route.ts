@@ -1,5 +1,10 @@
 export const runtime = 'edge';
 
+// Hardcode Stripe keys for Cloudflare Pages Edge Runtime
+const STRIPE_SECRET_KEY = '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';
+const STRIPE_PRICE_ID_MONTHLY = 'price_1TKvvN9mguiMhIsJzZvf5U78';
+const STRIPE_PRICE_ID_YEARLY = 'price_1TKvvN9mguiMhIsJMvlrHtRk';
+
 export async function POST(request: Request) {
   try {
     const { plan, billingCycle = 'monthly' } = await request.json();
@@ -8,30 +13,13 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Invalid plan' }, { status: 400 });
     }
 
-    // Read env vars inside the function (Edge Runtime compatible)
-    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-    const STRIPE_PRICE_ID_MONTHLY = process.env.STRIPE_PRICE_ID;
-    const STRIPE_PRICE_ID_YEARLY = process.env.STRIPE_PRICE_ID_YEARLY;
-
-    // Debug: log what key we're using
-    console.log('STRIPE_SECRET_KEY exists:', !!STRIPE_SECRET_KEY);
-    console.log('STRIPE_SECRET_KEY prefix:', STRIPE_SECRET_KEY?.substring(0, 10));
-
-    // If no real Stripe key configured, return demo mode response
-    if (!STRIPE_SECRET_KEY || STRIPE_SECRET_KEY === 'sk_test_placeholder' || STRIPE_SECRET_KEY.startsWith('sk_test_')) {
-      console.log('Demo mode: STRIPE_SECRET_KEY not configured or is test key');
-      return Response.json({
-        url: `${new URL(request.url).origin}/pricing/success?demo=true&session_id=demo_session`,
-      });
-    }
-
     const origin = new URL(request.url).origin;
     const priceId = billingCycle === 'yearly' ? STRIPE_PRICE_ID_YEARLY : STRIPE_PRICE_ID_MONTHLY;
 
     // Create Stripe Checkout Session via direct API call (Edge Runtime compatible)
     const params = new URLSearchParams({
       'mode': 'subscription',
-      'line_items[0][price]': priceId || 'price_placeholder',
+      'line_items[0][price]': priceId,
       'line_items[0][quantity]': '1',
       'success_url': `${origin}/pricing/success?session_id={CHECKOUT_SESSION_ID}`,
       'cancel_url': `${origin}/pricing`,
