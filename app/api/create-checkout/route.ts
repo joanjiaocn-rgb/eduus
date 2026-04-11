@@ -1,10 +1,5 @@
 export const runtime = 'edge';
 
-// Hardcode Stripe keys for Cloudflare Pages Edge Runtime
-const STRIPE_SECRET_KEY = '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';
-const STRIPE_PRICE_ID_MONTHLY = 'price_1TKvvN9mguiMhIsJzZvf5U78';
-const STRIPE_PRICE_ID_YEARLY = 'price_1TKvvN9mguiMhIsJMvlrHtRk';
-
 export async function POST(request: Request) {
   try {
     const { plan, billingCycle = 'monthly' } = await request.json();
@@ -13,13 +8,22 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Invalid plan' }, { status: 400 });
     }
 
+    // Read env vars inside the function (Edge Runtime compatible)
+    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+    const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID;
+    const STRIPE_PRICE_ID_YEARLY = process.env.STRIPE_PRICE_ID_YEARLY;
+
+    if (!STRIPE_SECRET_KEY) {
+      return Response.json({ error: 'Stripe not configured' }, { status: 500 });
+    }
+
     const origin = new URL(request.url).origin;
-    const priceId = billingCycle === 'yearly' ? STRIPE_PRICE_ID_YEARLY : STRIPE_PRICE_ID_MONTHLY;
+    const priceId = billingCycle === 'yearly' ? STRIPE_PRICE_ID_YEARLY : STRIPE_PRICE_ID;
 
     // Create Stripe Checkout Session via direct API call (Edge Runtime compatible)
     const params = new URLSearchParams({
       'mode': 'subscription',
-      'line_items[0][price]': priceId,
+      'line_items[0][price]': priceId || '',
       'line_items[0][quantity]': '1',
       'success_url': `${origin}/pricing/success?session_id={CHECKOUT_SESSION_ID}`,
       'cancel_url': `${origin}/pricing`,
