@@ -28,6 +28,20 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-2DMYKT4C10"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-2DMYKT4C10');
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <GoogleOAuthProvider clientId="780581028960-fbplg6gcm2oabmg3odcepnqfebrkovo9.apps.googleusercontent.com">
           {children}
