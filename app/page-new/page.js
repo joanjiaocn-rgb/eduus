@@ -39,21 +39,21 @@ Return the response as a JSON object with these keys: learningObjective, standar
         body: JSON.stringify({ systemPrompt, userPrompt })
       });
       
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Generation failed');
-      }
+      const data = await res.json();
       
-      const lessonData = await res.json();
+      if (!res.ok || data.error) {
+        console.error('API Error:', data);
+        throw new Error(data.error || data.details || 'Generation failed');
+      }
       
       // Backend already parses OpenAI response, use directly
       setResult({ 
         topic: val, 
-        ...lessonData
+        ...data
       });
     } catch (error) {
       console.error("Generation error:", error);
-      alert("Failed to generate lesson plan. Please try again.");
+      alert("Error: " + error.message);
     } finally {
       setIsGenerating(false);
     }
