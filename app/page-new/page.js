@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { SparklesIcon, ChevronDownIcon, AcademicCapIcon, PresentationChartBarIcon, DocumentDuplicateIcon, BookOpenIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { StarIcon } from '@heroicons/react/24/solid';
 
 export default function AIEDUInterface() {
   const [topic, setTopic] = useState("");
@@ -11,13 +12,15 @@ export default function AIEDUInterface() {
   // 体系关联逻辑
   const getStandardsForSubject = (subj) => {
     if (subj === 'Science') return ['NGSS (Science)'];
-    return ['Common Core (CCSS)'];
+    if (['ELA', 'Math'].includes(subj)) return ['Common Core (CCSS)'];
+    return ['Select Subject First'];
   };
 
   const handleSubjectChange = (e) => {
     const newSubj = e.target.value;
     setSubject(newSubj);
-    setStandard(getStandardsForSubject(newSubj)[0]);
+    const options = getStandardsForSubject(newSubj);
+    setStandard(options[0]);
   };
 
   return (
@@ -44,7 +47,7 @@ export default function AIEDUInterface() {
             <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600">Subject Area</label>
                 <select value={subject} onChange={handleSubjectChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm outline-none cursor-pointer">
-                    {['ELA', 'Math', 'Science', 'Social Studies'].map(s => <option key={s} value={s}>{s}</option>)}
+                    {['ELA', 'Math', 'Science'].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
             </div>
             <div className="space-y-2">
