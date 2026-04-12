@@ -15,9 +15,22 @@ export default function AIEDUInterface() {
     setTopic(val);
     setIsGenerating(true);
     setResult(null);
-    await new Promise(resolve => setTimeout(resolve, 1800));
-    setResult({ topic: val, content: "Expert lesson plan content generated..." });
-    setIsGenerating(false);
+
+    try {
+      // 对接真实的后端生成接口
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: val, assetType: 'Lesson Plan' })
+      });
+      const data = await res.json();
+      setResult(data.content || "生成失败，请稍后重试。");
+    } catch (error) {
+      console.error("Generation error:", error);
+      alert("生成请求出错，请检查接口状态。");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const assets = [
@@ -36,7 +49,7 @@ export default function AIEDUInterface() {
           </div>
           <span className="text-xl font-extrabold tracking-tight text-brand-900 uppercase">AI EDU <span className="text-accent-500 text-xs">Studio</span></span>
         </div>
-
+        
         <section className="flex-1">
           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Generate Assets</h3>
           <div className="space-y-3">
@@ -56,20 +69,30 @@ export default function AIEDUInterface() {
 
       <main className="flex-1 overflow-y-auto p-12 relative">
         <div className="max-w-5xl mx-auto space-y-16">
-          <header className="flex justify-end gap-4"><button className="bg-brand-600 text-white px-6 py-2.5 rounded-full text-sm font-bold">Sign In</button></header>
+          <header className="flex justify-end"><button className="bg-brand-600 text-white px-6 py-2.5 rounded-full text-sm font-bold">Sign In</button></header>
           
-          <div className="relative max-w-3xl mx-auto group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-brand-600 to-cyan-500 rounded-[2.5rem] blur opacity-15"></div>
+          <div className="relative max-w-3xl mx-auto">
             <input 
               value={topic}
               onChange={e => setTopic(e.target.value)}
-              className="relative w-full bg-white p-8 pl-10 pr-44 rounded-[2rem] shadow-2xl shadow-slate-200 border border-slate-100 outline-none text-2xl font-semibold transition-all placeholder:text-slate-300 focus:border-brand-600" 
-              placeholder="Type a topic (e.g. Plate Tectonics)..."
+              className="w-full bg-white p-8 pl-10 pr-44 rounded-[2rem] shadow-2xl border border-slate-100 outline-none text-2xl font-semibold transition-all focus:border-brand-600" 
+              placeholder="What are we teaching today?..."
             />
-            <button onClick={() => handleGenerate()} disabled={isGenerating} className="absolute right-4 top-4 bottom-4 bg-brand-600 text-white px-10 rounded-2xl font-black text-sm hover:bg-brand-700 transition-all active:scale-95">
-                {isGenerating ? 'Drafting...' : 'Draft Magic'}
+            <button 
+              onClick={() => handleGenerate()} 
+              disabled={isGenerating}
+              className="absolute right-4 top-4 bottom-4 bg-brand-600 text-white px-10 rounded-2xl font-black text-sm hover:bg-brand-700 disabled:bg-brand-400"
+            >
+              {isGenerating ? 'Drafting...' : 'Draft Magic'}
             </button>
           </div>
+
+          {result && (
+            <div className="max-w-4xl mx-auto p-10 bg-white border border-slate-200 rounded-3xl shadow-sm animate-in fade-in">
+              <h2 className="text-4xl font-black text-brand-900 mb-6">{topic}</h2>
+              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{result}</p>
+            </div>
+          )}
         </div>
       </main>
     </div>
