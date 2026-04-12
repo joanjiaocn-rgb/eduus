@@ -8,9 +8,9 @@ export default function AIEDUInterface() {
   const [topic, setTopic] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState(null);
-  const [grade, setGrade] = useState('Middle School (6-8)');
+  const [grade, setGrade] = useState('6-8');
   const [subject, setSubject] = useState('Science');
-  const [standard, setStandard] = useState('NGSS (Science)');
+  const [standard, setStandard] = useState('NGSS');
 
   const handleGenerate = async (t) => {
     const val = t || topic;
@@ -43,8 +43,16 @@ export default function AIEDUInterface() {
     handleGenerate(t);
   };
 
-  const subjects = ['English Language Arts', 'Mathematics', 'Science', 'Social Studies', 'Fine Arts'];
-  const standards = ['Common Core (CCSS)', 'NGSS (Science)', 'TEKS (Texas)'];
+  const grades = ['K-5', '6-8', '9-12'];
+  const subjects = ['ELA', 'Math', 'Science', 'Social Studies', 'World Languages', 'STEM / Computer Science', 'Arts', 'PE & Health', 'ESL / ELL', 'SEL'];
+  const standards = ['CCSS', 'NGSS', 'TEKS', 'State Stands', 'IB/AP', 'Custom'];
+
+  const assets = [
+    { name: '单节课计划', icon: AcademicCapIcon, pro: false },
+    { name: '单元计划', icon: BookOpenIcon, pro: true, link: '/pricing' },
+    { name: 'Google Slides', icon: PresentationChartBarIcon, pro: true, link: '/pricing' },
+    { name: 'Worksheets', icon: DocumentDuplicateIcon, pro: true, link: '/pricing' }
+  ];
 
   return (
     <div className="h-screen flex flex-col overflow-hidden text-slate-900 bg-[#f8fafc]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -71,42 +79,37 @@ export default function AIEDUInterface() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600">Grade Level</label>
                 <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm outline-none cursor-pointer">
-                  <option>Elementary (K-5)</option>
-                  <option>Middle School (6-8)</option>
-                  <option>High School (9-12)</option>
+                  {grades.map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600">Subject Area</label>
                 <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm outline-none cursor-pointer">
-                  {subjects.map(s => <option key={s}>{s}</option>)}
+                  {subjects.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600">Standards</label>
                 <select value={standard} onChange={e => setStandard(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm outline-none cursor-pointer">
-                  {standards.map(s => <option key={s}>{s}</option>)}
+                  {standards.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>
           </section>
 
           <section className="flex-1">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Export Tools</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Generate Assets</h3>
             <div className="space-y-3">
-              <button className="w-full flex items-center gap-3 p-4 bg-brand-50 text-brand-700 rounded-2xl font-bold text-sm border border-brand-100 hover:bg-brand-100 transition-all">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                PDF Document
-              </button>
-              <div className="relative group">
-                <button onClick={() => router.push('/pricing')} className="w-full flex items-center justify-between p-4 bg-slate-50 text-slate-400 rounded-2xl font-bold text-sm border border-dashed border-slate-200 hover:border-brand-600 transition-all cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
-                    Slide Deck
-                  </div>
-                  <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>
+              {assets.map(item => (
+                <button 
+                  key={item.name} 
+                  onClick={() => item.pro ? router.push(item.link) : handleGenerate()} 
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 ${item.pro ? 'border-dashed border-slate-200 text-slate-400 hover:border-brand-600' : 'bg-brand-50 text-brand-700 border-brand-100'}`}
+                >
+                  <div className="flex items-center gap-3"><item.icon className="w-5 h-5"/>{item.name}</div>
+                  {item.pro && <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>}
                 </button>
-              </div>
+              ))}
             </div>
           </section>
 
@@ -147,21 +150,21 @@ export default function AIEDUInterface() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-                <button onClick={() => quickDraft('The Water Cycle', 'Elementary (K-5)', 'Science', 'NGSS (Science)')} className="group bg-white/90 backdrop-blur border border-slate-200/80 p-5 rounded-3xl text-left transition-all hover:-translate-y-1 hover:shadow-xl shadow-sm">
+                <button onClick={() => quickDraft('The Water Cycle', 'K-5', 'Science', 'NGSS')} className="group bg-white/90 backdrop-blur border border-slate-200/80 p-5 rounded-3xl text-left transition-all hover:-translate-y-1 hover:shadow-xl shadow-sm">
                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12l-8-8-8 8M12 4v16"/></svg>
                   </div>
                   <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Science</p>
                   <p className="font-bold text-slate-800">The Water Cycle</p>
                 </button>
-                <button onClick={() => quickDraft('Pythagorean Theorem', 'Middle School (6-8)', 'Mathematics', 'Common Core (CCSS)')} className="group bg-white/90 backdrop-blur border border-slate-200/80 p-5 rounded-3xl text-left transition-all hover:-translate-y-1 hover:shadow-xl shadow-sm">
+                <button onClick={() => quickDraft('Pythagorean Theorem', '6-8', 'Math', 'CCSS')} className="group bg-white/90 backdrop-blur border border-slate-200/80 p-5 rounded-3xl text-left transition-all hover:-translate-y-1 hover:shadow-xl shadow-sm">
                   <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                   </div>
                   <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Mathematics</p>
                   <p className="font-bold text-slate-800">Pythagorean Theorem</p>
                 </button>
-                <button onClick={() => quickDraft('The Civil Rights Movement', 'High School (9-12)', 'Social Studies', 'Common Core (CCSS)')} className="group bg-white/90 backdrop-blur border border-slate-200/80 p-5 rounded-3xl text-left transition-all hover:-translate-y-1 hover:shadow-xl shadow-sm">
+                <button onClick={() => quickDraft('The Civil Rights Movement', '9-12', 'Social Studies', 'CCSS')} className="group bg-white/90 backdrop-blur border border-slate-200/80 p-5 rounded-3xl text-left transition-all hover:-translate-y-1 hover:shadow-xl shadow-sm">
                   <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                   </div>
@@ -194,7 +197,7 @@ export default function AIEDUInterface() {
 
                   <div className="bg-brand-900 p-10 rounded-[2rem] text-white shadow-xl">
                     <h4 className="text-[10px] font-black text-brand-300 uppercase tracking-widest mb-4">Aligned Standards</h4>
-                    <p className="text-3xl font-extrabold mb-2 tracking-tighter">{standard.includes('NGSS') ? 'MS-LS1-6' : 'CCSS.MATH.8.G.B.6'}</p>
+                    <p className="text-3xl font-extrabold mb-2 tracking-tighter">{standard === 'NGSS' ? 'MS-LS1-6' : 'CCSS.MATH.8.G.B.6'}</p>
                     <p className="text-brand-300 text-xs font-medium">Verified Pedagogical Alignment</p>
                   </div>
 
