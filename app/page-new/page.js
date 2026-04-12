@@ -1,90 +1,132 @@
 "use client";
+import { useState } from "react";
 
-import React, { useState } from 'react';
-import { SparklesIcon, ChevronDownIcon, AcademicCapIcon, PresentationChartBarIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
-import { StarIcon } from '@heroicons/react/24/solid';
+export default function Home() {
+  const [topic, setTopic] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showResult, setShowResult] = useState(false);
 
-export default function AIEDUInterface() {
-  const [selectedAsset, setSelectedAsset] = useState('Lesson Plan');
+  const handleGenerate = () => {
+    if (!topic.trim()) {
+      alert("Please enter a topic first.");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    setTimeout(() => {
+      setIsGenerating(false);
+      setShowResult(true);
+    }, 1800);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleGenerate();
+  };
 
   return (
-    <div className="min-h-screen bg-white flex font-sans text-slate-900">
-      {/* Sidebar - Precision-styled */}
-      <aside className="w-80 border-r border-slate-100 p-8 flex flex-col gap-10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <SparklesIcon className="w-5 h-5 text-white" />
+    <div className="bg-slate-50 text-slate-900 h-screen flex flex-col overflow-hidden font-sans">
+      {/* 导航栏 */}
+      <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 lg:px-8 shrink-0 z-50 sticky top-0">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-brand-600 p-2 rounded-xl text-white">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
-          <span className="text-xl font-black tracking-tight">AIEDU <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">BETA</span></span>
+          <span className="text-2xl font-black text-brand-900 tracking-tighter">AI EDU</span>
+          <span className="text-[10px] font-bold bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full uppercase ml-1">Beta</span>
         </div>
-
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Pedagogy Settings</h2>
-            <div className="space-y-4">
-              {[
-                { label: 'GRADE LEVEL', val: 'Elementary (K-5)' },
-                { label: 'SUBJECT AREA', val: 'Science' },
-                { label: 'STANDARDS ALIGNMENT', val: 'Common Core (CCSS)' }
-              ].map(item => (
-                <div key={item.label} className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 tracking-wider">{item.label}</label>
-                  <button className="w-full bg-white border border-slate-200 px-4 py-2.5 rounded-xl flex justify-between items-center text-sm font-medium hover:border-blue-400 transition-colors">
-                    {item.val} <ChevronDownIcon className="w-4 h-4 text-slate-400" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Generate Assets</h2>
-            <div className="space-y-3">
-              {[
-                { name: 'Lesson Plan', icon: AcademicCapIcon, pro: false },
-                { name: 'Class Slides', icon: PresentationChartBarIcon, pro: true },
-                { name: 'Worksheets', icon: DocumentDuplicateIcon, pro: true }
-              ].map(item => (
-                <button 
-                  key={item.name} 
-                  onClick={() => setSelectedAsset(item.name)}
-                  className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${selectedAsset === item.name ? 'border-blue-600 bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className={`w-5 h-5 ${selectedAsset === item.name ? 'text-blue-600' : 'text-slate-400'}`} />
-                    <span className="text-sm font-bold">{item.name}</span>
-                  </div>
-                  {item.pro && <span className="text-[9px] font-black text-amber-600 border border-amber-200 px-1.5 rounded">PRO</span>}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="flex items-center gap-3">
+          <button className="text-sm font-medium text-slate-600 hover:text-brand-600">Pricing</button>
+          <button className="bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition-colors">Sign In</button>
         </div>
-      </aside>
+      </header>
 
-      {/* Main Workspace - Precision-styled */}
-      <main className="flex-1 p-12">
-        <header className="flex justify-end items-center gap-4 mb-20 text-sm font-bold">
-          <button className="text-slate-500 hover:text-slate-900">Pricing</button>
-          <button className="bg-slate-900 text-white px-5 py-2 rounded-full hover:bg-slate-800">Sign In</button>
-        </header>
+      {/* 主体布局 */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* 左侧侧边栏 */}
+        <aside className="w-72 bg-white border-r border-slate-100 p-6 flex flex-col gap-10 overflow-y-auto shrink-0 hidden md:flex">
+          <section className="space-y-5">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Pedagogy Settings</h3>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Grade Level</label>
+              <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand-600 transition-all">
+                <option>Elementary (K-5)</option>
+                <option>Middle School (6-8)</option>
+                <option>High School (9-12)</option>
+              </select>
+            </div>
+          </section>
 
-        <section className="max-w-xl mx-auto">
-          <div className="border border-slate-200 rounded-3xl p-8 shadow-sm">
-            <input 
-              type="text" 
-              placeholder="What are we teaching today?..." 
-              className="w-full text-xl font-bold placeholder:text-slate-300 outline-none mb-6 text-center"
-            />
-            <button className="w-full bg-slate-900 text-white py-3 rounded-2xl font-bold hover:bg-slate-800 transition-colors">
-              Draft
+          <section className="flex-1 space-y-4">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Generate Assets</h3>
+
+            <button onClick={handleGenerate} className="w-full flex items-center gap-3 p-4 bg-brand-50 text-brand-700 rounded-2xl font-bold text-sm border-2 border-brand-200 hover:bg-brand-100 transition-all active:scale-[0.98]">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Lesson Plan</span>
             </button>
+
+            {/* PRO 按钮 */}
+            <button className="w-full flex items-center justify-between p-4 bg-slate-50 text-slate-400 rounded-2xl font-bold text-sm border border-dashed border-slate-200 cursor-not-allowed group">
+              <span>Class Slides</span>
+              <span className="flex items-center gap-1 bg-pro-400 text-[9px] text-white px-2 py-0.5 rounded-md font-extrabold group-hover:scale-105 transition-transform">
+                PRO
+              </span>
+            </button>
+          </section>
+        </aside>
+
+        {/* 右侧主内容区域 */}
+        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+          <div className="max-w-4xl mx-auto space-y-10">
+            {/* 输入搜索框 */}
+            <div className="relative group">
+              <input 
+                type="text" 
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="w-full bg-white p-7 pl-6 pr-36 rounded-3xl shadow-xl border-2 border-transparent focus:border-brand-600 outline-none text-xl font-medium transition-all placeholder:text-slate-300"
+                placeholder="What are we teaching today? (e.g., Photosynthesis)..."
+              />
+              <button 
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="absolute right-4 top-4 bottom-4 w-28 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 transition-colors flex items-center justify-center disabled:bg-brand-400"
+              >
+                {isGenerating ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Draft"
+                )}
+              </button>
+            </div>
+
+            {/* 状态渲染逻辑 */}
+            {!showResult ? (
+              <div className="h-64 border-4 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-400 gap-4 text-center p-8">
+                <p className="font-medium max-w-sm">Enter a topic above, and your expert lesson plan will appear here...</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 md:p-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="mb-10 pb-8 border-b border-slate-100">
+                  <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight text-brand-900">{topic}</h1>
+                  <div className="flex gap-3">
+                     <span className="bg-brand-100 text-brand-700 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">Science</span>
+                     <span className="bg-emerald-50 text-emerald-700 font-bold text-[10px] uppercase px-3 py-1.5 rounded-full">CCSS Aligned</span>
+                  </div>
+                </div>
+
+                <div className="space-y-10 text-slate-700 leading-relaxed">
+                  <section className="space-y-2 border-l-4 border-brand-200 pl-5">
+                    <h2 className="text-xs font-black text-brand-600 uppercase tracking-widest">Learning Objective</h2>
+                    <p className="italic text-base">Students will be able to understand the core concepts of {topic}.</p>
+                  </section>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="text-center mt-6 text-slate-400 text-xs">
-            Enter a topic to generate your lesson plan
-          </div>
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
