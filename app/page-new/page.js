@@ -11,8 +11,16 @@ export default function AIEDUInterface() {
   const [grade, setGrade] = useState('6-8');
   const [subject, setSubject] = useState('Science');
   const [standard, setStandard] = useState('NGSS');
-
   const [generatingStatus, setGeneratingStatus] = useState('');
+  const [isPro, setIsPro] = useState(false);
+
+  // Pro feature states
+  const [unitResult, setUnitResult] = useState(null);
+  const [slidesResult, setSlidesResult] = useState(null);
+  const [worksheetResult, setWorksheetResult] = useState(null);
+  const [isGeneratingUnit, setIsGeneratingUnit] = useState(false);
+  const [isGeneratingSlides, setIsGeneratingSlides] = useState(false);
+  const [isGeneratingWorksheet, setIsGeneratingWorksheet] = useState(false);
 
   const handleGenerate = async (t) => {
     const val = t || topic;
@@ -21,7 +29,6 @@ export default function AIEDUInterface() {
     setIsGenerating(true);
     setResult(null);
 
-    // Streaming-style status messages
     const statusMessages = [
       `Analyzing ${standard} standards...`,
       "Mapping exact curriculum codes...",
@@ -176,6 +183,246 @@ Return a JSON object with this exact structure:
     }
   };
 
+  // Generate Unit Plan (Pro)
+  const handleGenerateUnit = async () => {
+    if (!isPro) {
+      router.push('/pricing');
+      return;
+    }
+    if (!topic.trim()) return alert("Please enter a unit topic.");
+    
+    setIsGeneratingUnit(true);
+    setUnitResult(null);
+
+    const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools.
+
+Generate a comprehensive UNIT PLAN consisting of 8-12 sequential lessons that build upon each other. This should be publication-quality that would impress a principal.
+
+CRITICAL REQUIREMENTS:
+1. Create lessons based on the topic's complexity and depth - can be 5-15 lessons
+2. Typical US units range from 1-3 weeks, but flexible based on content needs
+3. Each lesson must have specific learning objectives aligned to standards
+4. Include big ideas and essential questions for the entire unit
+5. Provide a culminating assessment/project for the unit
+6. Show how each lesson connects to the next (progression map)
+7. Include vocabulary progression across lessons
+8. Address common misconceptions at the unit level
+9. Provide differentiation strategies for the entire unit
+
+The unit plan must be detailed enough that a substitute teacher could teach any lesson successfully.`;
+
+    const userPrompt = `Create a comprehensive unit plan for:
+- Unit Topic: ${topic}
+- Grade: ${grade}
+- Subject: ${subject}
+- Standards Framework: ${standard}
+- Number of Lessons: 10 lessons
+
+Return a JSON object with this exact structure:
+{
+  "unitTitle": "Engaging unit title",
+  "bigIdeas": ["Big idea 1", "Big idea 2", "Big idea 3"],
+  "essentialQuestions": ["Overarching EQ 1", "Overarching EQ 2"],
+  "standards": ["Specific standard code 1", "Specific standard code 2"],
+  "duration": "2-3 weeks (10 lessons)",
+  "vocabulary": ["Term 1", "Term 2", "Term 3", "Term 4", "Term 5"],
+  "misconceptions": [
+    {"misconception": "Common unit-level misconception", "correction": "How to address throughout unit"}
+  ],
+  "materials": ["Material 1 with quantity", "Material 2 with quantity"],
+  "culminatingAssessment": {
+    "title": "Final Project/Assessment name",
+    "description": "Detailed description of culminating task",
+    "rubric": ["Criteria 1: Exceeds/Meets/Below", "Criteria 2: Exceeds/Meets/Below"]
+  },
+  "lessons": [
+    {
+      "lessonNumber": 1,
+      "title": "Lesson 1 Title",
+      "duration": "45 min",
+      "objective": "SWBAT...",
+      "keyActivities": ["Activity 1", "Activity 2"],
+      "homework": "Brief homework description"
+    }
+  ],
+  "differentiation": {
+    "approaching": "Unit-level scaffold for struggling learners",
+    "onLevel": "Standard support",
+    "advanced": "Extension opportunities throughout unit",
+    "ell": "ELL strategies for the unit"
+  },
+  "reflectionPrompts": ["What went well?", "What would you change?"]
+}`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt })
+      });
+
+      if (!response.ok) throw new Error(`API returned status: ${response.status}`);
+
+      const data = await response.json();
+      setUnitResult(data);
+    } catch (err) {
+      console.error("Unit Generation Error:", err);
+      alert("Failed to generate unit plan. Please try again.");
+    } finally {
+      setIsGeneratingUnit(false);
+    }
+  };
+
+  // Generate Google Slides (Pro)
+  const handleGenerateSlides = async () => {
+    if (!isPro) {
+      router.push('/pricing');
+      return;
+    }
+    if (!result) return alert("Please generate a lesson plan first.");
+    
+    setIsGeneratingSlides(true);
+    setSlidesResult(null);
+
+    const systemPrompt = `You are an expert Instructional Designer and Presentation Creator for North American K-12 schools.
+Your task is to create a highly engaging, student-facing Slide Deck based on a specific topic.
+
+CRITICAL RULES FOR SLIDES:
+1. "Less is More" on screen: Bullet points must be short and digestible for students (max 6-8 words per bullet).
+2. Speaker Notes are mandatory: Provide the EXACT script the teacher should say while this slide is on screen.
+3. Visual Cues: For every slide, suggest an image, chart, or diagram the teacher could add.
+4. Flow: Must follow the "Hook -> Direct Instruction (I Do) -> Guided Practice (We Do) -> Assessment (Exit Ticket)" flow.
+
+Return strictly a JSON object with this exact structure:
+{
+  "presentationTitle": "Engaging Title Here",
+  "estimatedDuration": "25-30 minutes",
+  "slides": [
+    {
+      "slideNumber": 1,
+      "layout": "TitleSlide",
+      "title": "Main Title",
+      "subtitle": "Subtitle or Grade Level",
+      "speakerNotes": "Welcome class! Today we are going to explore..."
+    },
+    {
+      "slideNumber": 2,
+      "layout": "ContentSlide",
+      "title": "The Hook: [Engaging Question]",
+      "bulletPoints": ["Short bullet 1", "Short bullet 2"],
+      "visualSuggestion": "Describe an image here (e.g., 'A picture of a falling apple')",
+      "speakerNotes": "Teacher script: Have you ever wondered why..."
+    }
+  ]
+}
+Ensure there are at least 8-10 slides covering the entire lesson flow.`;
+
+    const userPrompt = `Create a presentation for:
+Topic: ${result.topic}
+Grade: ${grade}
+Subject: ${subject}
+Lesson Objective: ${result.objective}
+Key Vocabulary: ${result.vocabulary?.join(', ') || 'See lesson plan'}
+
+Make it engaging, visual, and ready to project in class.`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt })
+      });
+
+      if (!response.ok) throw new Error(`API returned status: ${response.status}`);
+
+      const data = await response.json();
+      setSlidesResult(data);
+    } catch (err) {
+      console.error("Slides Generation Error:", err);
+      alert("Failed to generate slides. Please try again.");
+    } finally {
+      setIsGeneratingSlides(false);
+    }
+  };
+
+  // Generate Worksheet (Pro)
+  const handleGenerateWorksheet = async () => {
+    if (!isPro) {
+      router.push('/pricing');
+      return;
+    }
+    if (!result) return alert("Please generate a lesson plan first.");
+    
+    setIsGeneratingWorksheet(true);
+    setWorksheetResult(null);
+
+    const systemPrompt = `You are an experienced curriculum designer. Create a student-facing worksheet that matches the lesson plan provided. The worksheet should be classroom-ready and pedagogically sound.
+
+Return ONLY valid JSON (no markdown fences) in this exact structure:
+{
+  "title": "Worksheet: [topic]",
+  "grade": "Grade X",
+  "subject": "...",
+  "sections": [
+    {
+      "type": "vocabulary",
+      "title": "Vocabulary Match",
+      "items": [{"word": "term", "definition": "meaning"}]
+    },
+    {
+      "type": "fill_blank",
+      "title": "Fill in the Blank",
+      "sentences": [{"text": "The ___ is important because...", "answer": "word"}]
+    },
+    {
+      "type": "comprehension",
+      "title": "Reading Check",
+      "questions": [{"question": "What is...?", "lines": 3}]
+    },
+    {
+      "type": "short_answer",
+      "title": "Think & Write",
+      "questions": [{"question": "Explain why...", "lines": 5}]
+    },
+    {
+      "type": "exit_ticket",
+      "title": "Exit Ticket",
+      "prompt": "Today I learned...",
+      "lines": 3
+    }
+  ]
+}
+
+Include 6-8 vocabulary terms, 5 fill-in-the-blank sentences, 3 comprehension questions, 2 short answer prompts, and 1 exit ticket.`;
+
+    const userPrompt = `Generate a student worksheet for this lesson:
+Topic: ${result.topic}
+Grade: ${grade}
+Subject: ${subject}
+Objective: ${result.objective}
+Key Vocabulary: ${result.vocabulary?.join(', ') || 'see lesson plan'}
+
+Make it engaging, pedagogically sound, and directly tied to the lesson content.`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt })
+      });
+
+      if (!response.ok) throw new Error(`API returned status: ${response.status}`);
+
+      const data = await response.json();
+      setWorksheetResult(data);
+    } catch (err) {
+      console.error("Worksheet Generation Error:", err);
+      alert("Failed to generate worksheet. Please try again.");
+    } finally {
+      setIsGeneratingWorksheet(false);
+    }
+  };
+
   const quickDraft = (t, g, s, std) => {
     setTopic(t);
     setGrade(g);
@@ -187,13 +434,6 @@ Return a JSON object with this exact structure:
   const grades = ['K-5', '6-8', '9-12'];
   const subjects = ['ELA', 'Math', 'Science', 'Social Studies', 'World Languages', 'STEM / Computer Science', 'Arts', 'PE & Health', 'ESL / ELL', 'SEL'];
   const standards = ['CCSS', 'NGSS', 'TEKS', 'State Stands', 'IB/AP', 'Custom'];
-
-  const assets = [
-    { name: 'Lesson Plan', icon: AcademicCapIcon, pro: false },
-    { name: 'Unit Plan', icon: BookOpenIcon, pro: true, link: '/pricing' },
-    { name: 'Google Slides', icon: PresentationChartBarIcon, pro: true, link: '/pricing' },
-    { name: 'Worksheets', icon: DocumentDuplicateIcon, pro: true, link: '/pricing' }
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
@@ -232,16 +472,37 @@ Return a JSON object with this exact structure:
         <section className="flex-1">
           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Generate Assets</h3>
           <div className="space-y-3">
-            {assets.map(item => (
-              <button 
-                key={item.name} 
-                onClick={() => item.pro ? router.push(item.link) : handleGenerate()} 
-                className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 ${item.pro ? 'border-dashed border-slate-200 text-slate-400 hover:border-brand-600' : 'bg-brand-50 text-brand-700 border-brand-100'}`}
-              >
-                <div className="flex items-center gap-3"><item.icon className="w-5 h-5"/>{item.name}</div>
-                {item.pro && <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>}
-              </button>
-            ))}
+            <button 
+              onClick={() => handleGenerate()} 
+              disabled={isGenerating}
+              className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 bg-brand-50 text-brand-700 border-brand-100"
+            >
+              <div className="flex items-center gap-3"><AcademicCapIcon className="w-5 h-5"/>Lesson Plan</div>
+            </button>
+            <button 
+              onClick={() => handleGenerateUnit()} 
+              disabled={isGeneratingUnit}
+              className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 border-dashed border-slate-200 text-slate-400 hover:border-brand-600"
+            >
+              <div className="flex items-center gap-3"><BookOpenIcon className="w-5 h-5"/>Unit Plan</div>
+              <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>
+            </button>
+            <button 
+              onClick={() => handleGenerateSlides()} 
+              disabled={isGeneratingSlides || !result}
+              className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 border-dashed border-slate-200 text-slate-400 hover:border-brand-600 disabled:opacity-50"
+            >
+              <div className="flex items-center gap-3"><PresentationChartBarIcon className="w-5 h-5"/>Google Slides</div>
+              <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>
+            </button>
+            <button 
+              onClick={() => handleGenerateWorksheet()} 
+              disabled={isGeneratingWorksheet || !result}
+              className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 border-dashed border-slate-200 text-slate-400 hover:border-brand-600 disabled:opacity-50"
+            >
+              <div className="flex items-center gap-3"><DocumentDuplicateIcon className="w-5 h-5"/>Worksheets</div>
+              <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>
+            </button>
           </div>
         </section>
 
@@ -353,36 +614,4 @@ Return a JSON object with this exact structure:
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {result.assessment && (
-                <div className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm">
-                  <h4 className="text-xs font-black text-brand-600 uppercase tracking-widest mb-4">Assessment</h4>
-                  {typeof result.assessment === 'object' ? (
-                    <div className="space-y-4">
-                      {result.assessment.formative && (
-                        <div>
-                          <p className="text-xs font-bold text-slate-600 mb-1">Formative:</p>
-                          <p className="text-slate-700">{result.assessment.formative}</p>
-                        </div>
-                      )}
-                      {result.assessment.summative && (
-                        <div>
-                          <p className="text-xs font-bold text-slate-600 mb-1">Summative:</p>
-                          <p className="text-slate-700">{result.assessment.summative}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-slate-700">{result.assessment}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
-  );
-}
+                </div
