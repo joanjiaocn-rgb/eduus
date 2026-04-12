@@ -1304,7 +1304,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                 className="flex-1 px-4 py-3 outline-none font-medium text-slate-800"
               />
               <button
-                onClick={mode === 'lesson' ? handleGenerate : handleGenerateUnit} disabled={isGenerating}
+                onClick={mode === 'lesson' ? handleGenerate : handleGenerateUnit} disabled={mode === 'unit' ? !isPro || isGenerating : isGenerating}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {isGenerating ? (mode === 'lesson' ? "Drafting Plan..." : "Creating Unit...") : (mode === 'lesson' ? "Generate Lesson ✨" : "Generate Unit 📚")}
