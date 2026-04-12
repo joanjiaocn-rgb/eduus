@@ -1,11 +1,24 @@
 "use client";
 import React, { useState } from 'react';
-import { SparklesIcon, ChevronDownIcon, AcademicCapIcon, PresentationChartBarIcon, DocumentDuplicateIcon, BookOpenIcon, DocumentTextIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import { StarIcon } from '@heroicons/react/24/solid';
+import { SparklesIcon, ChevronDownIcon, AcademicCapIcon, PresentationChartBarIcon, DocumentDuplicateIcon, BookOpenIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 export default function AIEDUInterface() {
   const [topic, setTopic] = useState("");
+  const [subject, setSubject] = useState('Science');
+  const [standard, setStandard] = useState('NGSS (Science)');
   const [selectedAsset, setSelectedAsset] = useState('Lesson Plan');
+
+  // 体系关联逻辑
+  const getStandardsForSubject = (subj) => {
+    if (subj === 'Science') return ['NGSS (Science)'];
+    return ['Common Core (CCSS)'];
+  };
+
+  const handleSubjectChange = (e) => {
+    const newSubj = e.target.value;
+    setSubject(newSubj);
+    setStandard(getStandardsForSubject(newSubj)[0]);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
@@ -20,18 +33,26 @@ export default function AIEDUInterface() {
         <section>
           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Lesson Context</h3>
           <div className="space-y-5">
-            {[
-              { label: 'Grade Level', options: ['Elementary (K-5)', 'Middle School (6-8)', 'High School (9-12)'] },
-              { label: 'Subject Area', options: ['English Language Arts', 'Mathematics', 'Science', 'Social Studies'] },
-              { label: 'Standards', options: ['Common Core (CCSS)', 'NGSS (Science)', 'TEKS (Texas)'] }
-            ].map(item => (
-              <div key={item.label} className="space-y-2">
-                <label className="text-xs font-bold text-slate-600">{item.label}</label>
+            <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-600">Grade Level</label>
                 <select className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm outline-none cursor-pointer">
-                  {item.options.map(o => <option key={o}>{o}</option>)}
+                    <option>Elementary (K-5)</option>
+                    <option>Middle School (6-8)</option>
+                    <option>High School (9-12)</option>
                 </select>
-              </div>
-            ))}
+            </div>
+            <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-600">Subject Area</label>
+                <select value={subject} onChange={handleSubjectChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm outline-none cursor-pointer">
+                    {['ELA', 'Math', 'Science', 'Social Studies'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+            </div>
+            <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-600">Standards</label>
+                <select value={standard} onChange={e => setStandard(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm outline-none cursor-pointer">
+                    {getStandardsForSubject(subject).map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+            </div>
           </div>
         </section>
 
@@ -42,8 +63,7 @@ export default function AIEDUInterface() {
               { name: 'Lesson Plan', icon: AcademicCapIcon, pro: false },
               { name: 'Unit Plan', icon: BookOpenIcon, pro: true },
               { name: 'Class Slides', icon: PresentationChartBarIcon, pro: true },
-              { name: 'Worksheets', icon: DocumentDuplicateIcon, pro: true },
-              { name: '分级阅读', icon: DocumentTextIcon, pro: true }
+              { name: 'Worksheets', icon: DocumentDuplicateIcon, pro: true }
             ].map(item => (
               <button key={item.name} onClick={() => setSelectedAsset(item.name)} className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 ${selectedAsset === item.name ? 'border-brand-600 bg-brand-50' : 'border-slate-100 hover:border-slate-200'}`}>
                 <div className="flex items-center gap-3"><item.icon className="w-5 h-5"/>{item.name}</div>
@@ -66,7 +86,7 @@ export default function AIEDUInterface() {
               className="w-full bg-white p-8 pl-10 pr-44 rounded-[2rem] shadow-2xl shadow-slate-200 border border-slate-100 outline-none text-2xl font-semibold transition-all placeholder:text-slate-300 focus:border-brand-600" 
               placeholder="What are we teaching today?..."
             />
-            <button className="absolute right-4 top-4 bottom-4 bg-brand-600 text-white px-10 rounded-2xl font-black text-sm hover:bg-brand-700 transition-all active:scale-95 flex items-center gap-2">Draft</button>
+            <button className="absolute right-4 top-4 bottom-4 bg-brand-600 text-white px-10 rounded-2xl font-black text-sm hover:bg-brand-700 transition-all active:scale-95">Draft</button>
           </div>
 
           <div className="pt-12 border-t border-slate-200 flex flex-col items-center gap-6 opacity-60">
