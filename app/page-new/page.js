@@ -44,22 +44,9 @@ Return the response as a JSON object with these keys: learningObjective, standar
         throw new Error(errData.error || 'Generation failed');
       }
       
-      const data = await res.json();
+      const lessonData = await res.json();
       
-      // Handle different response formats from OpenAI
-      let lessonData = data;
-      
-      // If the API returns the raw OpenAI response with choices
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        const content = data.choices[0].message.content;
-        try {
-          lessonData = JSON.parse(content);
-        } catch (e) {
-          // If not valid JSON, treat as plain text
-          lessonData = { learningObjective: content };
-        }
-      }
-      
+      // Backend already parses OpenAI response, use directly
       setResult({ 
         topic: val, 
         ...lessonData
