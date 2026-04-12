@@ -19,41 +19,135 @@ export default function AIEDUInterface() {
     setIsGenerating(true);
     setResult(null);
 
-    const systemPrompt = `You are an expert curriculum designer for K-12 education in the United States. Create a detailed lesson plan that aligns with ${standard} standards.`;
-    const userPrompt = `Create a lesson plan for ${subject} at grade level ${grade} on the topic: "${val}". 
-    
-Include the following sections:
-1. Learning Objective
-2. Standards Alignment (${standard})
-3. The Hook (engaging opening)
-4. Main Activities
-5. Differentiation Support (ELL and Advanced Learners)
-6. Assessment
+    const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools. 
 
-Return the response as a JSON object with these keys: learningObjective, standardsAlignment, hook, activities, differentiation, assessment.`;
+Generate a comprehensive, publication-quality lesson plan that would impress a principal during a formal Danielson Framework observation.
+
+CRITICAL REQUIREMENTS:
+1. Use precise educational terminology (Bloom's Taxonomy, DOK levels, formative/summative assessment)
+2. Include VERBATIM teacher scripts - what the teacher actually says word-for-word, in quotes
+3. Provide Socratic questioning sequences that scaffold from low to high cognitive demand
+4. Include EXACT standard codes (e.g., CCSS.ELA-LITERACY.RI.5.3, CCSS.Math.Content.4.OA.A.1, NGSS 5-PS1-1)
+5. List ALL materials needed with quantities
+6. Provide precise pacing (down to the minute) for a 45-50 minute class
+7. Include pre-class preparation and homework extension
+8. Address common misconceptions with specific correction strategies
+9. Include explicit Danielson Framework Domain 3 alignment notes
+
+The output must be detailed enough that a substitute teacher could teach this lesson successfully.`;
+
+    const userPrompt = `Create a professional lesson plan for:
+- Topic: ${val}
+- Grade: ${grade}
+- Subject: ${subject}
+- Standards Framework: ${standard}
+
+Return a JSON object with this exact structure:
+{
+  "topic": "Engaging, creative lesson title",
+  "standardCode": "EXACT standard code e.g. CCSS.ELA-LITERACY.RI.5.3 or CCSS.Math.Content.4.OA.A.1 or NGSS 5-PS1-1",
+  "standardDescription": "One sentence: how this lesson specifically addresses this standard",
+  "additionalStandards": ["Additional standard code if applicable"],
+  "objective": "SWBAT... (use strong Bloom's verb like analyze, evaluate, create)",
+  "dokLevel": "DOK Level 1-4 with brief rationale",
+  "bloomsLevel": "Bloom's Taxonomy level (Remember/Understand/Apply/Analyze/Evaluate/Create)",
+  "essentialQuestions": ["Overarching question 1", "Overarching question 2"],
+  "learningTargets": ["Students will be able to...", "Students will understand that..."],
+  "misconceptions": [
+    {"misconception": "What students often think", "correction": "How to address it"}
+  ],
+  "materials": ["Material 1 with quantity", "Material 2 with quantity"],
+  "preparation": "What teacher needs to do before class (5-10 minutes)",
+  "pacingGuide": {
+    "totalTime": "45 minutes",
+    "breakdown": [
+      {"phase": "Hook/Do Now", "time": "5 min", "description": "Brief description"},
+      {"phase": "Direct Instruction", "time": "10 min", "description": "Brief description"},
+      {"phase": "Guided Practice", "time": "12 min", "description": "Brief description"},
+      {"phase": "Independent Practice", "time": "13 min", "description": "Brief description"},
+      {"phase": "Closure/Exit Ticket", "time": "5 min", "description": "Brief description"}
+    ]
+  },
+  "procedure": [
+    {
+      "type": "Hook",
+      "title": "Engage & Activate",
+      "time": "5m",
+      "teacherScript": "EXACT words the teacher says: 'Class, today we're going to...'",
+      "studentResponse": "Expected student responses or actions",
+      "content": "Detailed description of the hook activity (2-3 sentences)",
+      "color": "bg-orange-50 border-orange-200"
+    },
+    {
+      "type": "I Do",
+      "title": "Teacher Modeling",
+      "time": "10m",
+      "teacherScript": "EXACT words the teacher says while modeling: 'Watch me as I...'",
+      "socraticQuestions": ["Low-level question?", "Mid-level question?", "High-level question?"],
+      "content": "Detailed modeling description with think-aloud process",
+      "color": "bg-blue-50 border-blue-200"
+    },
+    {
+      "type": "We Do",
+      "title": "Guided Practice",
+      "time": "15m",
+      "teacherScript": "EXACT words for guided practice: 'Now let's try this together...'",
+      "socraticQuestions": ["Scaffolded question 1?", "Scaffolded question 2?", "Scaffolded question 3?"],
+      "content": "Detailed guided practice with questioning sequence",
+      "color": "bg-green-50 border-green-200"
+    },
+    {
+      "type": "You Do",
+      "title": "Independent Practice",
+      "time": "12m",
+      "teacherScript": "Transition language: 'Now it's your turn...'",
+      "content": "Independent work description with success criteria and monitoring tips",
+      "color": "bg-purple-50 border-purple-200"
+    },
+    {
+      "type": "Closure",
+      "title": "Wrap-Up & Exit Ticket",
+      "time": "3m",
+      "teacherScript": "Closure language: 'Let's review what we learned today...'",
+      "content": "Closure activity and exit ticket description",
+      "color": "bg-slate-50 border-slate-200"
+    }
+  ],
+  "anchorChart": "Description of anchor chart to create during lesson (title and key elements)",
+  "differentiation": {
+    "approaching": "Specific scaffold for struggling learners (IEP, 504) - sentence starters, graphic organizers, etc.",
+    "onLevel": "Standard support for grade-level learners",
+    "advanced": "Extension for gifted/high-achieving students - deeper analysis, creative application",
+    "ell": "Specific ELL strategies - sentence frames, visuals, native language support, vocabulary pre-teaching"
+  },
+  "assessment": {
+    "formative": "How to check understanding during lesson (thumbs up, whiteboards, turn and talk)",
+    "summative": "Exit ticket or end-of-lesson assessment with specific question",
+    "successCriteria": ["Student can...", "Student demonstrates...", "Student explains..."]
+  },
+  "danielsonAlignment": {
+    "domain": "Domain 3: Instruction",
+    "components": ["3a: Communicating with Students", "3b: Questioning & Discussion Techniques", "3c: Engaging Students in Learning"],
+    "evidence": "Specific evidence of how this lesson demonstrates Distinguished/Proficient performance: explain how the teacher script demonstrates 3a, how Socratic questions demonstrate 3b, and how I Do/We Do/You Do structure demonstrates 3c. Be specific and detailed (3-4 sentences)."
+  },
+  "homework": "Extension activity or homework assignment connected to the lesson",
+  "reflectionPrompts": ["What went well?", "What would you change?", "Which students need follow-up?"]
+}`;
 
     try {
-      const res = await fetch('/api/generate', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ systemPrompt, userPrompt })
       });
-      
-      const data = await res.json();
-      
-      if (!res.ok || data.error) {
-        console.error('API Error:', data);
-        throw new Error(data.error || data.details || 'Generation failed');
-      }
-      
-      // Backend already parses OpenAI response, use directly
-      setResult({ 
-        topic: val, 
-        ...data
-      });
-    } catch (error) {
-      console.error("Generation error:", error);
-      alert("Error: " + error.message);
+
+      if (!response.ok) throw new Error(`API returned status: ${response.status}`);
+
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      console.error("Generation Error:", err);
+      alert("Failed to reach the AI expert. Please check your API configuration or terminal logs.");
     } finally {
       setIsGenerating(false);
     }
@@ -211,62 +305,81 @@ Return the response as a JSON object with these keys: learningObjective, standar
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* Learning Objective */}
-                  <div className="md:col-span-2 bg-white/90 backdrop-blur border border-slate-200/80 p-10 rounded-[2rem] shadow-xl shadow-slate-200/20">
+                <div className="space-y-8">
+                  {/* Objective */}
+                  <div className="bg-white/90 backdrop-blur border border-slate-200/80 p-10 rounded-[2rem] shadow-xl shadow-slate-200/20">
                     <h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-6">Learning Objective</h4>
-                    <p className="text-2xl font-semibold text-brand-900 leading-relaxed">
-                      {result.learningObjective || "Students will be able to describe how energy from sunlight is captured by plants to convert water and carbon dioxide into food."}
-                    </p>
+                    <p className="text-2xl font-semibold text-brand-900 leading-relaxed">{result.objective}</p>
                   </div>
 
-                  {/* Aligned Standards */}
+                  {/* Standards */}
                   <div className="bg-brand-900 p-10 rounded-[2rem] text-white shadow-xl">
                     <h4 className="text-[10px] font-black text-brand-300 uppercase tracking-widest mb-4">Aligned Standards</h4>
-                    <p className="text-3xl font-extrabold mb-2 tracking-tighter">{result.standardsAlignment || (standard === 'NGSS' ? 'MS-LS1-6' : 'CCSS.MATH.8.G.B.6')}</p>
-                    <p className="text-brand-300 text-xs font-medium">Verified Pedagogical Alignment</p>
+                    <p className="text-3xl font-extrabold mb-2 tracking-tighter">{result.standardCode}</p>
+                    <p className="text-brand-300 text-sm">{result.standardDescription}</p>
                   </div>
 
-                  {/* The Hook */}
-                  <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
-                    <h4 className="text-xs font-black text-brand-600 uppercase tracking-widest mb-4">The Hook</h4>
-                    <p className="text-slate-600 text-sm leading-relaxed italic">
-                      &quot;{result.hook || "Imagine if you could make your own snacks just by standing in the sun. That is exactly what plants do! Today we learn the secret."}&quot;
-                    </p>
-                  </div>
-
-                  {/* Main Activities */}
-                  {result.activities && (
-                    <div className="md:col-span-3 bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
-                      <h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-4">Main Activities</h4>
-                      <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">{result.activities}</div>
+                  {/* Procedure */}
+                  {result.procedure && (
+                    <div className="space-y-6">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instructional Procedures</h4>
+                      {result.procedure.map((step, i) => (
+                        <div key={i} className={`${step.color} p-8 rounded-3xl border-2`}>
+                          <div className="flex justify-between items-center mb-4">
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60 bg-white/50 px-3 py-1 rounded-full">
+                              {step.type} • {step.time}
+                            </span>
+                          </div>
+                          <h5 className="font-bold text-xl mb-3 text-slate-900">{step.title}</h5>
+                          <p className="text-slate-700 leading-relaxed mb-4">{step.content}</p>
+                          {step.teacherScript && (
+                            <div className="bg-white/70 p-4 rounded-xl">
+                              <p className="text-xs font-bold text-slate-500 mb-1">Teacher Script:</p>
+                              <p className="text-slate-800 italic">&quot;{step.teacherScript}&quot;</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
 
-                  {/* Differentiation Support */}
-                  <div className="md:col-span-2 bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
-                    <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest mb-4">Differentiation Support</h4>
-                    {result.differentiation ? (
-                      <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">{result.differentiation}</div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                        <div className="bg-slate-50 p-6 rounded-2xl">
-                          <p className="text-xs font-bold text-slate-800 mb-2">ELL Support</p>
-                          <p className="text-xs text-slate-500">Use visual organizers to diagram the photosynthesis equation using pictures.</p>
-                        </div>
-                        <div className="bg-slate-50 p-6 rounded-2xl">
-                          <p className="text-xs font-bold text-slate-800 mb-2">Advanced Learners</p>
-                          <p className="text-xs text-slate-500">Research the differences between C3, C4, and CAM photosynthetic pathways.</p>
-                        </div>
+                  {/* Differentiation */}
+                  {result.differentiation && (
+                    <div className="bg-slate-900 p-10 rounded-[2rem] text-slate-300">
+                      <h4 className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-6">Differentiation Strategies</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {Object.entries(result.differentiation).map(([key, value]) => (
+                          <div key={key}>
+                            <h5 className="text-xs font-bold text-indigo-300 uppercase mb-2">{key}</h5>
+                            <p className="text-sm leading-relaxed">{value}</p>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Assessment */}
                   {result.assessment && (
                     <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
                       <h4 className="text-xs font-black text-brand-600 uppercase tracking-widest mb-4">Assessment</h4>
-                      <p className="text-slate-600 text-sm leading-relaxed">{result.assessment}</p>
+                      {typeof result.assessment === 'object' ? (
+                        <div className="space-y-4">
+                          {result.assessment.formative && (
+                            <div>
+                              <p className="text-xs font-bold text-slate-600 mb-1">Formative:</p>
+                              <p className="text-slate-700">{result.assessment.formative}</p>
+                            </div>
+                          )}
+                          {result.assessment.summative && (
+                            <div>
+                              <p className="text-xs font-bold text-slate-600 mb-1">Summative:</p>
+                              <p className="text-slate-700">{result.assessment.summative}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-slate-700">{result.assessment}</p>
+                      )}
                     </div>
                   )}
                 </div>
