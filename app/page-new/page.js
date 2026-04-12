@@ -48,8 +48,8 @@ export default function AIEDUInterface() {
   const standards = ['CCSS', 'NGSS', 'TEKS', 'State Stands', 'IB/AP', 'Custom'];
 
   const assets = [
-    { name: '单节课计划', icon: AcademicCapIcon, pro: false },
-    { name: '单元计划', icon: BookOpenIcon, pro: true, link: '/pricing' },
+    { name: 'Lesson Plan', icon: AcademicCapIcon, pro: false },
+    { name: 'Unit Plan', icon: BookOpenIcon, pro: true, link: '/pricing' },
     { name: 'Google Slides', icon: PresentationChartBarIcon, pro: true, link: '/pricing' },
     { name: 'Worksheets', icon: DocumentDuplicateIcon, pro: true, link: '/pricing' }
   ];
