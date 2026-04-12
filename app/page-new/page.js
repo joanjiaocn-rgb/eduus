@@ -199,7 +199,7 @@ Return the response as a JSON object with these keys: learningObjective, standar
             </div>
 
             {result && (
-              <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <div className="animate-fade-in">
                 <div className="flex items-end justify-between mb-8 pb-8 border-b border-slate-200">
                   <div>
                     <p className="text-[10px] font-black text-brand-600 uppercase tracking-[0.3em] mb-2">Lesson Draft Ready</p>
