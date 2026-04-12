@@ -1304,20 +1304,12 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                 className="flex-1 px-4 py-3 outline-none font-medium text-slate-800"
               />
               <button
-                onClick={mode === 'lesson' ? handleGenerate : handleGenerateUnit} disabled={isGenerating}
+                onClick={mode === 'lesson' ? handleGenerate : handleGenerateUnit} disabled={!isPro || isGenerating}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {isGenerating ? (mode === 'lesson' ? "Drafting Plan..." : "Creating Unit...") : (mode === 'lesson' ? "Generate Lesson ✨" : "Generate Unit 📚")}
               </button>
-              {currentPlan && !isGenerating && (
-                <button
-                  onClick={handleGenerateWorksheet}
-                  disabled={isGeneratingWorksheet}
-                  className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm"
-                >
-                  {isGeneratingWorksheet ? '⏳ Generating...' : '📝 Worksheet'}
-                </button>
-              )}
+
             </div>
 
             {/* Loading skeleton */}
@@ -1689,24 +1681,10 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
               <div className="flex flex-wrap gap-3 mb-6">
                 <button
                   onClick={() => {
-                    if (!isPro) { setPaywallFeature('Student Worksheet Generator'); setShowPaywall(true); return; }
-                    handleGenerateWorksheet();
-                  }}
-                  disabled={isGeneratingWorksheet || isGeneratingLeveledTexts}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
-                >
-                  {isGeneratingWorksheet ? (
-                    <><span className="animate-spin">⏳</span> Generating Worksheet...</>
-                  ) : (
-                    <>{isPro ? '📝' : '🔒'} Generate Worksheet {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
-                  )}
-                </button>
-                <button
-                  onClick={() => {
                     if (!isPro) { setPaywallFeature('Leveled Texts Generator'); setShowPaywall(true); return; }
                     handleGenerateLeveledTexts();
                   }}
-                  disabled={isGeneratingWorksheet || isGeneratingLeveledTexts}
+                  disabled={!isPro || isGeneratingLeveledTexts}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
                 >
                   {isGeneratingLeveledTexts ? (
@@ -1720,7 +1698,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                     if (!isPro) { setPaywallFeature('Google Slides Generator'); setShowPaywall(true); return; }
                     handleGenerateSlides();
                   }}
-                  disabled={isGeneratingWorksheet || isGeneratingLeveledTexts || isGeneratingSlides}
+                  disabled={!isPro || isGeneratingLeveledTexts || isGeneratingSlides}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
                 >
                   {isGeneratingSlides ? (
@@ -1947,7 +1925,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                         if (!isPro) { setPaywallFeature('Google Slides Generator'); setShowPaywall(true); return; }
                         handleGenerateUnitSlides();
                       }}
-                      disabled={isGeneratingSlides}
+                      disabled={!isPro || isGeneratingSlides}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 ${isPro ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
                     >
                       {isGeneratingSlides ? (
