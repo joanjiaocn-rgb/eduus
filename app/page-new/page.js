@@ -19,7 +19,14 @@ export default function AIEDUInterface() {
   useEffect(() => {
     // Temporary whitelist for testing - joanjiaocn@gmail.com is always Pro
     const TEMP_PRO_EMAILS = ['joanjiaocn@gmail.com'];
-    const storedEmail = localStorage.getItem('user_email') || '';
+    const TEST_EMAIL = 'joanjiaocn@gmail.com';
+    
+    // Auto-set test email if not present
+    let storedEmail = localStorage.getItem('user_email');
+    if (!storedEmail) {
+      localStorage.setItem('user_email', TEST_EMAIL);
+      storedEmail = TEST_EMAIL;
+    }
     setUserEmail(storedEmail);
     
     if (TEMP_PRO_EMAILS.includes(storedEmail)) {
