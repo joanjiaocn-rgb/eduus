@@ -45,9 +45,24 @@ Return the response as a JSON object with these keys: learningObjective, standar
       }
       
       const data = await res.json();
+      
+      // Handle different response formats from OpenAI
+      let lessonData = data;
+      
+      // If the API returns the raw OpenAI response with choices
+      if (data.choices && data.choices[0] && data.choices[0].message) {
+        const content = data.choices[0].message.content;
+        try {
+          lessonData = JSON.parse(content);
+        } catch (e) {
+          // If not valid JSON, treat as plain text
+          lessonData = { learningObjective: content };
+        }
+      }
+      
       setResult({ 
         topic: val, 
-        ...data
+        ...lessonData
       });
     } catch (error) {
       console.error("Generation error:", error);
