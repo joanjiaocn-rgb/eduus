@@ -12,12 +12,33 @@ export default function AIEDUInterface() {
   const [subject, setSubject] = useState('Science');
   const [standard, setStandard] = useState('NGSS');
 
+  const [generatingStatus, setGeneratingStatus] = useState('');
+
   const handleGenerate = async (t) => {
     const val = t || topic;
     if (!val.trim()) return alert("Please enter a topic.");
     setTopic(val);
     setIsGenerating(true);
     setResult(null);
+
+    // Streaming-style status messages
+    const statusMessages = [
+      `Analyzing ${standard} standards...`,
+      "Mapping exact curriculum codes...",
+      "Designing Bloom's Taxonomy sequence...",
+      "Writing verbatim teacher scripts...",
+      "Crafting Socratic questions by DOK level...",
+      "Building minute-by-minute pacing guide...",
+      "Aligning to Danielson Framework Domain 3...",
+      "Generating differentiation strategies...",
+      "Finalizing assessment rubric...",
+    ];
+    let statusIdx = 0;
+    setGeneratingStatus(statusMessages[0]);
+    const statusInterval = setInterval(() => {
+      statusIdx = (statusIdx + 1) % statusMessages.length;
+      setGeneratingStatus(statusMessages[statusIdx]);
+    }, 1800);
 
     const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools. 
 
@@ -149,6 +170,8 @@ Return a JSON object with this exact structure:
       console.error("Generation Error:", err);
       alert("Failed to reach the AI expert. Please check your API configuration or terminal logs.");
     } finally {
+      clearInterval(statusInterval);
+      setGeneratingStatus('');
       setIsGenerating(false);
     }
   };
@@ -264,6 +287,13 @@ Return a JSON object with this exact structure:
               </button>
             ))}
           </div>
+
+          {isGenerating && (
+            <div className="text-center py-8">
+              <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-slate-600 font-medium">{generatingStatus}</p>
+            </div>
+          )}
 
           {result && (
             <div className="space-y-8">
