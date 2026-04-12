@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SparklesIcon, AcademicCapIcon, PresentationChartBarIcon, DocumentDuplicateIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 
@@ -13,6 +13,19 @@ export default function AIEDUInterface() {
   const [standard, setStandard] = useState('NGSS');
   const [generatingStatus, setGeneratingStatus] = useState('');
   const [isPro, setIsPro] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+
+  // Check for temporary Pro whitelist on mount
+  useEffect(() => {
+    // Temporary whitelist for testing - joanjiaocn@gmail.com is always Pro
+    const TEMP_PRO_EMAILS = ['joanjiaocn@gmail.com'];
+    const storedEmail = localStorage.getItem('user_email') || '';
+    setUserEmail(storedEmail);
+    
+    if (TEMP_PRO_EMAILS.includes(storedEmail)) {
+      setIsPro(true);
+    }
+  }, []);
 
   // Pro feature states
   const [unitResult, setUnitResult] = useState(null);
