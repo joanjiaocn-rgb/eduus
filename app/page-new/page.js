@@ -19,17 +19,39 @@ export default function AIEDUInterface() {
     setIsGenerating(true);
     setResult(null);
 
+    const systemPrompt = `You are an expert curriculum designer for K-12 education in the United States. Create a detailed lesson plan that aligns with ${standard} standards.`;
+    const userPrompt = `Create a lesson plan for ${subject} at grade level ${grade} on the topic: "${val}". 
+    
+Include the following sections:
+1. Learning Objective
+2. Standards Alignment (${standard})
+3. The Hook (engaging opening)
+4. Main Activities
+5. Differentiation Support (ELL and Advanced Learners)
+6. Assessment
+
+Return the response as a JSON object with these keys: learningObjective, standardsAlignment, hook, activities, differentiation, assessment.`;
+
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: val, grade, subject, standard, assetType: 'Lesson Plan' })
+        body: JSON.stringify({ systemPrompt, userPrompt })
       });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Generation failed');
+      }
+      
       const data = await res.json();
-      setResult(data);
+      setResult({ 
+        topic: val, 
+        content: data.learningObjective || data.content || JSON.stringify(data, null, 2)
+      });
     } catch (error) {
       console.error("Generation error:", error);
-      alert("生成请求出错，请检查接口状态。");
+      alert("Failed to generate lesson plan. Please try again.");
     } finally {
       setIsGenerating(false);
     }
