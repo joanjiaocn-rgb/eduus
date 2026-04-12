@@ -47,7 +47,7 @@ Return the response as a JSON object with these keys: learningObjective, standar
       const data = await res.json();
       setResult({ 
         topic: val, 
-        content: data.learningObjective || data.content || JSON.stringify(data, null, 2)
+        ...data
       });
     } catch (error) {
       console.error("Generation error:", error);
@@ -210,52 +210,66 @@ Return the response as a JSON object with these keys: learningObjective, standar
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {/* Learning Objective */}
                   <div className="md:col-span-2 bg-white/90 backdrop-blur border border-slate-200/80 p-10 rounded-[2rem] shadow-xl shadow-slate-200/20">
                     <h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-6">Learning Objective</h4>
                     <p className="text-2xl font-semibold text-brand-900 leading-relaxed">
-                      {result.content || "Students will be able to describe how energy from sunlight is captured by plants to convert water and carbon dioxide into food."}
+                      {result.learningObjective || "Students will be able to describe how energy from sunlight is captured by plants to convert water and carbon dioxide into food."}
                     </p>
                   </div>
 
+                  {/* Aligned Standards */}
                   <div className="bg-brand-900 p-10 rounded-[2rem] text-white shadow-xl">
                     <h4 className="text-[10px] font-black text-brand-300 uppercase tracking-widest mb-4">Aligned Standards</h4>
-                    <p className="text-3xl font-extrabold mb-2 tracking-tighter">{standard === 'NGSS' ? 'MS-LS1-6' : 'CCSS.MATH.8.G.B.6'}</p>
+                    <p className="text-3xl font-extrabold mb-2 tracking-tighter">{result.standardsAlignment || (standard === 'NGSS' ? 'MS-LS1-6' : 'CCSS.MATH.8.G.B.6')}</p>
                     <p className="text-brand-300 text-xs font-medium">Verified Pedagogical Alignment</p>
                   </div>
 
+                  {/* The Hook */}
                   <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
                     <h4 className="text-xs font-black text-brand-600 uppercase tracking-widest mb-4">The Hook</h4>
-                    <p className="text-slate-600 text-sm leading-relaxed italic">&quot;Imagine if you could make your own snacks just by standing in the sun. That is exactly what plants do! Today we learn the secret.&quot;</p>
+                    <p className="text-slate-600 text-sm leading-relaxed italic">
+                      &quot;{result.hook || "Imagine if you could make your own snacks just by standing in the sun. That is exactly what plants do! Today we learn the secret."}&quot;
+                    </p>
                   </div>
 
+                  {/* Main Activities */}
+                  {result.activities && (
+                    <div className="md:col-span-3 bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
+                      <h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-4">Main Activities</h4>
+                      <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">{result.activities}</div>
+                    </div>
+                  )}
+
+                  {/* Differentiation Support */}
                   <div className="md:col-span-2 bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
                     <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest mb-4">Differentiation Support</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                      <div className="bg-slate-50 p-6 rounded-2xl">
-                        <p className="text-xs font-bold text-slate-800 mb-2">ELL Support</p>
-                        <p className="text-xs text-slate-500">Use visual organizers to diagram the photosynthesis equation using pictures.</p>
+                    {result.differentiation ? (
+                      <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">{result.differentiation}</div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div className="bg-slate-50 p-6 rounded-2xl">
+                          <p className="text-xs font-bold text-slate-800 mb-2">ELL Support</p>
+                          <p className="text-xs text-slate-500">Use visual organizers to diagram the photosynthesis equation using pictures.</p>
+                        </div>
+                        <div className="bg-slate-50 p-6 rounded-2xl">
+                          <p className="text-xs font-bold text-slate-800 mb-2">Advanced Learners</p>
+                          <p className="text-xs text-slate-500">Research the differences between C3, C4, and CAM photosynthetic pathways.</p>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 p-6 rounded-2xl">
-                        <p className="text-xs font-bold text-slate-800 mb-2">Advanced Learners</p>
-                        <p className="text-xs text-slate-500">Research the differences between C3, C4, and CAM photosynthetic pathways.</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
+
+                  {/* Assessment */}
+                  {result.assessment && (
+                    <div className="bg-white p-10 rounded-[2rem] border border-slate-200 shadow-sm">
+                      <h4 className="text-xs font-black text-brand-600 uppercase tracking-widest mb-4">Assessment</h4>
+                      <p className="text-slate-600 text-sm leading-relaxed">{result.assessment}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-
-            <div className="pt-12 border-t border-slate-200 flex flex-col items-center gap-8 opacity-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Standard Compliance & Support</p>
-              <div className="flex flex-wrap justify-center gap-10 md:gap-16">
-                {['CCSS', 'NGSS', 'TEKS', 'FERPA'].map(item => (
-                  <div key={item} className="flex items-center gap-2 grayscale hover:grayscale-0 transition-all cursor-default">
-                    <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center font-black text-[10px]">{item}</div>
-                    <span className="text-xs font-bold">{item === 'FERPA' ? 'Privacy Compliant' : item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </main>
       </div>
