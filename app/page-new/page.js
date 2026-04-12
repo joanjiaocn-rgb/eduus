@@ -72,7 +72,7 @@ export default function AIEDUInterface() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-80 bg-white border-r border-slate-200 p-8 flex flex-col gap-8 overflow-y-auto shrink-0 hidden lg:flex">
+        <aside className="w-80 bg-white border-r border-slate-200 p-6 flex flex-col gap-6 overflow-y-auto shrink-0 hidden lg:flex max-h-screen">
           <section>
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Lesson Context</h3>
             <div className="space-y-5">
@@ -223,7 +223,7 @@ export default function AIEDUInterface() {
               </div>
             )}
 
-            <div className="pt-12 border-t border-slate-200 flex flex-col items-center gap-8 opacity-60">
+            <div className="pt-12 border-t border-slate-200 flex flex-col items-center gap-8 opacity-0">
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Standard Compliance & Support</p>
               <div className="flex flex-wrap justify-center gap-10 md:gap-16">
                 {['CCSS', 'NGSS', 'TEKS', 'FERPA'].map(item => (
