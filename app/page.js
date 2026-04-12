@@ -1681,6 +1681,20 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
               <div className="flex flex-wrap gap-3 mb-6">
                 <button
                   onClick={() => {
+                    if (!isPro) { setPaywallFeature('Student Worksheet Generator'); setShowPaywall(true); return; }
+                    handleGenerateWorksheet();
+                  }}
+                  disabled={!isPro || isGeneratingWorksheet}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
+                >
+                  {isGeneratingWorksheet ? (
+                    <><span className="animate-spin">⏳</span> Generating Worksheet...</>
+                  ) : (
+                    <>{isPro ? '📝' : '🔒'} Worksheet {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
                     if (!isPro) { setPaywallFeature('Leveled Texts Generator'); setShowPaywall(true); return; }
                     handleGenerateLeveledTexts();
                   }}
@@ -1698,13 +1712,13 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                     if (!isPro) { setPaywallFeature('Google Slides Generator'); setShowPaywall(true); return; }
                     handleGenerateSlides();
                   }}
-                  disabled={!isPro || isGeneratingLeveledTexts || isGeneratingSlides}
+                  disabled={!isPro || isGeneratingSlides}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
                 >
                   {isGeneratingSlides ? (
                     <><span className="animate-spin">⏳</span> Generating Slides...</>
                   ) : (
-                    <>{isPro ? '📽️' : '🔒'} Generate Slides {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
+                    <>{isPro ? '📽️' : '🔒'} Google Slides {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
                   )}
                 </button>
               </div>
