@@ -394,13 +394,6 @@ export default function EduSparkPro() {
   const handleGenerate = async () => {
     if (!topic.trim()) return alert("Please enter a lesson topic.");
 
-    // Free tier: max 3 lessons/month
-    if (!isPro && lessonCount >= 3) {
-      setPaywallFeature('Unlimited Lesson Plans');
-      setShowPaywall(true);
-      return;
-    }
-
     setIsGenerating(true);
     setCurrentPlan(null);
     setCurrentId(null);
