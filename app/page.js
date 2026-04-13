@@ -134,6 +134,9 @@ export default function EduSparkPro() {
   const [isGeneratingLeveledTexts, setIsGeneratingLeveledTexts] = useState(false);
   const [currentSlides, setCurrentSlides] = useState(null);
   const [isGeneratingSlides, setIsGeneratingSlides] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  const PRO_WHITELIST = ['joanjiaocn@gmail.com'];
 
   const contentRef = useRef(null);
   const worksheetRef = useRef(null);
@@ -214,11 +217,16 @@ export default function EduSparkPro() {
         // Store Google ID in sessionStorage for subscription binding
         sessionStorage.setItem('google_user_id', profile.id);
 
-        // Restore subscription status bound to this Google account
-        const savedPro = localStorage.getItem(`eduspark_pro_${profile.id}`);
-        if (savedPro) {
-          const { active } = JSON.parse(savedPro);
-          if (active) setIsPro(true);
+        // Whitelist: joanjiaocn@gmail.com gets Pro for free
+        if (PRO_WHITELIST.includes(profile.email)) {
+          setIsPro(true);
+        } else {
+          // Restore subscription status bound to this Google account
+          const savedPro = localStorage.getItem(`eduspark_pro_${profile.id}`);
+          if (savedPro) {
+            const { active } = JSON.parse(savedPro);
+            if (active) setIsPro(true);
+          }
         }
       } catch (e) {
         setGoogleUser(tokenResponse);
@@ -1144,19 +1152,41 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             Join Waitlist
           </a>
           
-          {/* Google Login */}
-          {googleUser ? (
-            <div className="flex items-center gap-2">
-              {googleUser.picture && (
-                <img src={googleUser.picture} alt="Profile" className="w-8 h-8 rounded-full" />
-              )}
-              <button
-                onClick={handleLogout}
-                className="text-xs font-bold text-slate-500 hover:text-slate-700 px-2"
-              >
-                Logout
-              </button>
+{showProfile && (
+            <div className="absolute right-0 top-16 w-96 bg-white border border-slate-200 shadow-2xl rounded-2xl p-6 z-[100] max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-slate-800">Your History</h3>
+                <button onClick={() => setShowProfile(false)} className="text-slate-400"><XMarkIcon className="w-5 h-5"/></button>
+              </div>
+              <div className="space-y-4">
+                {history.map(item => (
+                  <div key={item.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors">
+                    <p className="font-bold text-sm text-slate-800">{item.plan?.topic || 'Untitled Plan'}</p>
+                    <p className="text-[10px] text-slate-500 mb-3">{new Date(item.savedAt).toLocaleDateString()}</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => { handleSelectHistory(item); setShowProfile(false); }} className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded">View Plan</button>
+                      <button className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded">Slides</button>
+                      <button className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded">Worksheet</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+          )}
+          {/* Google Login / Profile */}
+          {googleUser ? (
+            <button
+              onClick={() => setShowProfile(p => !p)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
+                showProfile ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {googleUser.profile?.picture
+                ? <img src={googleUser.profile.picture} alt="avatar" className="w-6 h-6 rounded-full" />
+                : <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-black text-[10px]">{(googleUser.profile?.name || 'U')[0]}</span>
+              }
+              {googleUser.profile?.name?.split(' ')[0] || 'Profile'}
+            </button>
           ) : (
             <button
               onClick={() => login()}
@@ -1171,8 +1201,6 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
               Sign in with Google
             </button>
           )}
-          
-          <div className="text-[10px] font-black bg-slate-900 text-white px-3 py-1 rounded-full uppercase">Expert Mode</div>
           {!isPro && (
             <a href="/pricing" className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity">
               Upgrade to Pro →
