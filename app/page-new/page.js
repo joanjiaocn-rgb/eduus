@@ -19,18 +19,14 @@ export default function AIEDUInterface() {
 
   // Check for temporary Pro whitelist on mount
   useEffect(() => {
-    // Temporary whitelist for testing - joanjiaocn@gmail.com is always Pro
     const TEMP_PRO_EMAILS = ['joanjiaocn@gmail.com'];
     const TEST_EMAIL = 'joanjiaocn@gmail.com';
-    
-    // Auto-set test email if not present
     let storedEmail = localStorage.getItem('user_email');
     if (!storedEmail) {
       localStorage.setItem('user_email', TEST_EMAIL);
       storedEmail = TEST_EMAIL;
     }
     setUserEmail(storedEmail);
-    
     if (TEMP_PRO_EMAILS.includes(storedEmail)) {
       setIsPro(true);
     }
@@ -49,7 +45,6 @@ export default function AIEDUInterface() {
         sessionStorage.setItem('google_user_id', profile.id);
         localStorage.setItem('user_email', profile.email || '');
         setUserEmail(profile.email || '');
-
         const savedPro = localStorage.getItem(`eduspark_pro_${profile.id}`);
         if (savedPro) {
           const { active } = JSON.parse(savedPro);
@@ -109,9 +104,7 @@ export default function AIEDUInterface() {
     }, 1800);
 
     const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools. 
-
 Generate a comprehensive, publication-quality lesson plan that would impress a principal during a formal Danielson Framework observation.
-
 CRITICAL REQUIREMENTS:
 1. Use precise educational terminology (Bloom's Taxonomy, DOK levels, formative/summative assessment)
 2. Include VERBATIM teacher scripts - what the teacher actually says word-for-word, in quotes
@@ -122,7 +115,6 @@ CRITICAL REQUIREMENTS:
 7. Include pre-class preparation and homework extension
 8. Address common misconceptions with specific correction strategies
 9. Include explicit Danielson Framework Domain 3 alignment notes
-
 The output must be detailed enough that a substitute teacher could teach this lesson successfully.`;
 
     const userPrompt = `Create a professional lesson plan for:
@@ -130,11 +122,10 @@ The output must be detailed enough that a substitute teacher could teach this le
 - Grade: ${grade}
 - Subject: ${subject}
 - Standards Framework: ${standard}
-
 Return a JSON object with this exact structure:
 {
   "topic": "Engaging, creative lesson title",
-  "standardCode": "EXACT standard code e.g. CCSS.ELA-LITERACY.RI.5.3 or CCSS.Math.Content.4.OA.A.1 or NGSS 5-PS1-1",
+  "standardCode": "EXACT standard code",
   "standardDescription": "One sentence: how this lesson specifically addresses this standard",
   "additionalStandards": ["Additional standard code if applicable"],
   "objective": "SWBAT... (use strong Bloom's verb like analyze, evaluate, create)",
@@ -229,9 +220,7 @@ Return a JSON object with this exact structure:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ systemPrompt, userPrompt })
       });
-
       if (!response.ok) throw new Error(`API returned status: ${response.status}`);
-
       const data = await response.json();
       setResult(data);
     } catch (err) {
@@ -251,14 +240,11 @@ Return a JSON object with this exact structure:
       return;
     }
     if (!topic.trim()) return alert("Please enter a unit topic.");
-    
     setIsGeneratingUnit(true);
     setUnitResult(null);
 
     const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools.
-
 Generate a comprehensive UNIT PLAN consisting of 8-12 sequential lessons that build upon each other. This should be publication-quality that would impress a principal.
-
 CRITICAL REQUIREMENTS:
 1. Create lessons based on the topic's complexity and depth - can be 5-15 lessons
 2. Typical US units range from 1-3 weeks, but flexible based on content needs
@@ -269,7 +255,6 @@ CRITICAL REQUIREMENTS:
 7. Include vocabulary progression across lessons
 8. Address common misconceptions at the unit level
 9. Provide differentiation strategies for the entire unit
-
 The unit plan must be detailed enough that a substitute teacher could teach any lesson successfully.`;
 
     const userPrompt = `Create a comprehensive unit plan for:
@@ -278,7 +263,6 @@ The unit plan must be detailed enough that a substitute teacher could teach any 
 - Subject: ${subject}
 - Standards Framework: ${standard}
 - Number of Lessons: 10 lessons
-
 Return a JSON object with this exact structure:
 {
   "unitTitle": "Engaging unit title",
@@ -321,9 +305,7 @@ Return a JSON object with this exact structure:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ systemPrompt, userPrompt })
       });
-
       if (!response.ok) throw new Error(`API returned status: ${response.status}`);
-
       const data = await response.json();
       setUnitResult(data);
     } catch (err) {
@@ -341,19 +323,16 @@ Return a JSON object with this exact structure:
       return;
     }
     if (!result) return alert("Please generate a lesson plan first.");
-    
     setIsGeneratingSlides(true);
     setSlidesResult(null);
 
     const systemPrompt = `You are an expert Instructional Designer and Presentation Creator for North American K-12 schools.
 Your task is to create a highly engaging, student-facing Slide Deck based on a specific topic.
-
 CRITICAL RULES FOR SLIDES:
 1. "Less is More" on screen: Bullet points must be short and digestible for students (max 6-8 words per bullet).
 2. Speaker Notes are mandatory: Provide the EXACT script the teacher should say while this slide is on screen.
 3. Visual Cues: For every slide, suggest an image, chart, or diagram the teacher could add.
 4. Flow: Must follow the "Hook -> Direct Instruction (I Do) -> Guided Practice (We Do) -> Assessment (Exit Ticket)" flow.
-
 Return strictly a JSON object with this exact structure:
 {
   "presentationTitle": "Engaging Title Here",
@@ -384,7 +363,6 @@ Grade: ${grade}
 Subject: ${subject}
 Lesson Objective: ${result.objective}
 Key Vocabulary: ${result.vocabulary?.join(', ') || 'See lesson plan'}
-
 Make it engaging, visual, and ready to project in class.`;
 
     try {
@@ -393,9 +371,7 @@ Make it engaging, visual, and ready to project in class.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ systemPrompt, userPrompt })
       });
-
       if (!response.ok) throw new Error(`API returned status: ${response.status}`);
-
       const data = await response.json();
       setSlidesResult(data);
     } catch (err) {
@@ -413,12 +389,10 @@ Make it engaging, visual, and ready to project in class.`;
       return;
     }
     if (!result) return alert("Please generate a lesson plan first.");
-    
     setIsGeneratingWorksheet(true);
     setWorksheetResult(null);
 
     const systemPrompt = `You are an experienced curriculum designer. Create a student-facing worksheet that matches the lesson plan provided. The worksheet should be classroom-ready and pedagogically sound.
-
 Return ONLY valid JSON (no markdown fences) in this exact structure:
 {
   "title": "Worksheet: [topic]",
@@ -453,7 +427,6 @@ Return ONLY valid JSON (no markdown fences) in this exact structure:
     }
   ]
 }
-
 Include 6-8 vocabulary terms, 5 fill-in-the-blank sentences, 3 comprehension questions, 2 short answer prompts, and 1 exit ticket.`;
 
     const userPrompt = `Generate a student worksheet for this lesson:
@@ -462,7 +435,6 @@ Grade: ${grade}
 Subject: ${subject}
 Objective: ${result.objective}
 Key Vocabulary: ${result.vocabulary?.join(', ') || 'see lesson plan'}
-
 Make it engaging, pedagogically sound, and directly tied to the lesson content.`;
 
     try {
@@ -471,9 +443,7 @@ Make it engaging, pedagogically sound, and directly tied to the lesson content.`
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ systemPrompt, userPrompt })
       });
-
       if (!response.ok) throw new Error(`API returned status: ${response.status}`);
-
       const data = await response.json();
       setWorksheetResult(data);
     } catch (err) {
@@ -688,3 +658,38 @@ Make it engaging, pedagogically sound, and directly tied to the lesson content.`
                     ))}
                   </div>
                 </div>
+              )}
+
+              {result.assessment && (
+                <div className="bg-white border border-slate-200 p-10 rounded-3xl shadow-sm">
+                  <h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-6">Assessment</h4>
+                  <div className="space-y-4">
+                    {result.assessment.formative && (
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Formative</p>
+                        <p className="text-slate-800">{result.assessment.formative}</p>
+                      </div>
+                    )}
+                    {result.assessment.summative && (
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Summative</p>
+                        <p className="text-slate-800">{result.assessment.summative}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {result.homework && (
+                <div className="bg-amber-50 border border-amber-200 p-8 rounded-3xl">
+                  <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Homework / Extension</h4>
+                  <p className="text-slate-800">{result.homework}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
