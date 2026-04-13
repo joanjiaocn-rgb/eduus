@@ -9,7 +9,8 @@ import {
   ChatBubbleLeftRightIcon, BeakerIcon, BookOpenIcon, 
   ExclamationTriangleIcon, ClockIcon, TrashIcon,
   PencilSquareIcon, CheckIcon, XMarkIcon, ChevronLeftIcon,
-  Squares2X2Icon, DocumentTextIcon, BookmarkIcon, LightBulbIcon
+  Squares2X2Icon, DocumentTextIcon, BookmarkIcon, LightBulbIcon,
+  DocumentDuplicateIcon, PresentationChartBarIcon
 } from '@heroicons/react/24/outline';
 
 const STORAGE_KEY = 'eduspark_lesson_history';
