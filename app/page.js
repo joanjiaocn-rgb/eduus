@@ -1397,8 +1397,9 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                 <div className="border-b border-slate-200 px-8 bg-white flex gap-1">
                   {[
                     { id: 'lesson', label: '📄 Lesson Plan', icon: DocumentTextIcon },
-                    { id: 'differentiation', label: '🎯 Differentiation', icon: PuzzlePieceIcon },
-                    { id: 'standards', label: '📊 Standards', icon: CheckBadgeIcon },
+                    { id: 'worksheet', label: '📝 Worksheet', icon: DocumentDuplicateIcon },
+                    { id: 'leveled_texts', label: '📖 Leveled Texts', icon: BookOpenIcon },
+                    { id: 'slides', label: '📊 Google Slides', icon: PresentationChartBarIcon },
                   ].map(tab => {
                     const Icon = tab.icon;
                     return (
@@ -1630,65 +1631,66 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                     </>
                   )}
 
-                  {lessonTab === 'differentiation' && (
+                  {lessonTab === 'worksheet' && (
                     <div className="space-y-8">
                       <div className="text-center mb-8">
-                        <h2 className="text-2xl font-black text-slate-900 mb-2">Differentiation Strategies</h2>
-                        <p className="text-slate-500">Tailored support for every learner</p>
+                        <h2 className="text-2xl font-black text-slate-900 mb-2">Student Worksheet</h2>
+                        <p className="text-slate-500">Ready for print or digital distribution</p>
                       </div>
-                      {currentPlan.differentiation ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {[
-                            { key: 'approaching', label: 'Approaching', color: 'bg-emerald-50 border-emerald-200', badge: 'bg-emerald-600' },
-                            { key: 'onLevel', label: 'On-Level', color: 'bg-amber-50 border-amber-200', badge: 'bg-amber-500' },
-                            { key: 'advanced', label: 'Advanced', color: 'bg-red-50 border-red-200', badge: 'bg-red-600' },
-                            { key: 'ell', label: 'ELL', color: 'bg-blue-50 border-blue-200', badge: 'bg-blue-600' },
-                          ].map(({ key, label, color, badge }) => (
-                            <div key={key} className={`${color} border-2 rounded-2xl p-6`}>
-                              <span className={`${badge} text-white text-[10px] font-black px-3 py-1 rounded-full uppercase`}>{label}</span>
-                              <div className="mt-4">
-                                <EditableText
-                                  value={currentPlan.differentiation[key] || 'No strategy'}
-                                  onChange={val => updatePlan(p => ({ ...p, differentiation: { ...p.differentiation, [key]: val } }))}
-                                  multiline
-                                  className="text-slate-700 text-sm leading-relaxed block"
-                                />
-                              </div>
-                            </div>
-                          ))}
+                      {currentWorksheet ? (
+                        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm" ref={worksheetRef}>
+                            <h2 className="text-2xl font-black text-slate-900 mb-6">{currentWorksheet.title}</h2>
+                            {currentWorksheet.sections?.map((section, si) => (
+                                <div key={si} className="space-y-4 mb-6">
+                                    <h3 className="font-black text-slate-800 uppercase text-sm tracking-widest">{section.title}</h3>
+                                    <p className="text-sm text-slate-700">{section.content}</p>
+                                </div>
+                            ))}
                         </div>
                       ) : (
-                        <p className="text-center text-slate-400 py-12">No differentiation strategies available</p>
+                        <div className="text-center py-12">
+                          <button onClick={() => { if (!isPro) { setPaywallFeature('Worksheet'); setShowPaywall(true); } else handleGenerateWorksheet(); }} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700">Generate Worksheet 📝</button>
+                        </div>
                       )}
                     </div>
                   )}
 
-                  {lessonTab === 'standards' && (
+                  {lessonTab === 'leveled_texts' && (
                     <div className="space-y-8">
                       <div className="text-center mb-8">
-                        <h2 className="text-2xl font-black text-slate-900 mb-2">Standards & Frameworks</h2>
-                        <p className="text-slate-500">Evidence-based alignment</p>
+                        <h2 className="text-2xl font-black text-slate-900 mb-2">Leveled Texts</h2>
+                        <p className="text-slate-500">Reading materials at 3 Lexile levels</p>
                       </div>
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
-                        <h3 className="text-[10px] font-black text-emerald-600 uppercase mb-4">Curriculum Standards</h3>
-                        {currentPlan.standardCode ? (
-                          <div className="space-y-3">
-                            <span className="font-mono text-lg font-black bg-emerald-600 text-white px-4 py-2 rounded-lg">{currentPlan.standardCode}</span>
-                            {currentPlan.standardDescription && <p className="text-emerald-800 italic">{currentPlan.standardDescription}</p>}
-                          </div>
-                        ) : <p className="text-emerald-600">No standard code</p>}
-                      </div>
-                      {currentPlan.danielsonAlignment && (
-                        <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-8 text-white">
-                          <h3 className="text-[10px] font-black text-indigo-300 uppercase mb-4">Danielson Framework</h3>
-                          <p className="text-sm font-bold text-indigo-200 mb-3">{currentPlan.danielsonAlignment.domain}</p>
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {currentPlan.danielsonAlignment.components?.map((c, i) => (
-                              <span key={i} className="text-[10px] bg-indigo-800 text-indigo-200 px-3 py-1 rounded-full font-bold">{c}</span>
+                      {currentLeveledTexts ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {['Emerging', 'Proficient', 'Advanced'].map(lvl => (
+                                <div key={lvl} className="bg-white p-6 rounded-2xl border border-slate-200">
+                                    <h3 className="font-bold mb-2">{lvl}</h3>
+                                    <p className="text-sm text-slate-600">{currentLeveledTexts[lvl.toLowerCase()] || 'Generating...'}</p>
+                                </div>
                             ))}
-                          </div>
-                          <p className="text-indigo-100 text-sm">{currentPlan.danielsonAlignment.evidence}</p>
-                          <div className="mt-4 text-emerald-400 text-sm font-bold">✓ Ready for observation</div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <button onClick={() => { if (!isPro) { setPaywallFeature('Leveled Texts'); setShowPaywall(true); } else handleGenerateLeveledTexts(); }} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700">Generate Leveled Texts 📖</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {lessonTab === 'slides' && (
+                    <div className="space-y-8">
+                      <div className="text-center mb-8">
+                        <h2 className="text-2xl font-black text-slate-900 mb-2">Google Slides</h2>
+                        <p className="text-slate-500">Unit slide deck generated in seconds</p>
+                      </div>
+                      {currentSlides ? (
+                        <div className="bg-white p-8 rounded-3xl border border-slate-200">
+                          <p className="text-center">Slides are ready! Export to Google Slides...</p>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <button onClick={() => { if (!isPro) { setPaywallFeature('Google Slides'); setShowPaywall(true); } else handleGenerateSlides(); }} className="bg-purple-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-purple-700">Generate Slides 📊</button>
                         </div>
                       )}
                     </div>
@@ -1697,54 +1699,13 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
               </div>
             )}
 
-            {/* PRO Feature Buttons */}
+{/* Footer / Meta */}
             {currentPlan && !isGenerating && mode === 'lesson' && (
-              <div className="flex flex-wrap gap-3 mb-6">
-                <button
-                  onClick={() => {
-                    if (!isPro) { setPaywallFeature('Student Worksheet Generator'); setShowPaywall(true); return; }
-                    handleGenerateWorksheet();
-                  }}
-                  disabled={!isPro || isGeneratingWorksheet}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
-                >
-                  {isGeneratingWorksheet ? (
-                    <><span className="animate-spin">⏳</span> Generating Worksheet...</>
-                  ) : (
-                    <>{isPro ? '📝' : '🔒'} Worksheet {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    if (!isPro) { setPaywallFeature('Leveled Texts Generator'); setShowPaywall(true); return; }
-                    handleGenerateLeveledTexts();
-                  }}
-                  disabled={!isPro || isGeneratingLeveledTexts}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
-                >
-                  {isGeneratingLeveledTexts ? (
-                    <><span className="animate-spin">⏳</span> Generating Leveled Texts...</>
-                  ) : (
-                    <>{isPro ? '📚' : '🔒'} Leveled Texts {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    if (!isPro) { setPaywallFeature('Google Slides Generator'); setShowPaywall(true); return; }
-                    handleGenerateSlides();
-                  }}
-                  disabled={!isPro || isGeneratingSlides}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-colors text-sm disabled:opacity-50 ${isPro ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
-                >
-                  {isGeneratingSlides ? (
-                    <><span className="animate-spin">⏳</span> Generating Slides...</>
-                  ) : (
-                    <>{isPro ? '📽️' : '🔒'} Google Slides {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full font-black">PRO</span>}</>
-                  )}
-                </button>
-              </div>
+                <div className="mt-12 pt-6 border-t border-slate-200 text-center text-slate-400 text-xs">
+                    <p>Designed for professional educators • AI EDU Studio</p>
+                </div>
             )}
-
+            
             {/* Worksheet Display */}
             {currentWorksheet && !isGeneratingWorksheet && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
