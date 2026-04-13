@@ -535,7 +535,7 @@ Make it engaging, pedagogically sound, and directly tied to the lesson content.`
 
       <main className="flex-1 overflow-y-auto p-12 relative">
         <div className="max-w-5xl mx-auto space-y-16">
-          <header className="flex justify-end"><button className="bg-brand-600 text-white px-6 py-2.5 rounded-full text-sm font-bold">Sign In</button></header>
+          <header className="flex justify-end"><button onClick={() => router.push('/auth/signin')} className="bg-brand-600 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-brand-500 transition-all">Sign In</button></header>
           
           <div className="relative max-w-3xl mx-auto">
             <input 
