@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import { SparklesIcon, AcademicCapIcon, PresentationChartBarIcon, DocumentDuplicateIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 
 export default function AIEDUInterface() {
@@ -14,6 +15,7 @@ export default function AIEDUInterface() {
   const [generatingStatus, setGeneratingStatus] = useState('');
   const [isPro, setIsPro] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [googleUser, setGoogleUser] = useState(null);
 
   // Check for temporary Pro whitelist on mount
   useEffect(() => {
@@ -33,6 +35,45 @@ export default function AIEDUInterface() {
       setIsPro(true);
     }
   }, []);
+
+  // Google Login
+  const login = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const profile = await profileRes.json();
+        const userWithProfile = { ...tokenResponse, profile };
+        setGoogleUser(userWithProfile);
+        sessionStorage.setItem('google_user_id', profile.id);
+        localStorage.setItem('user_email', profile.email || '');
+        setUserEmail(profile.email || '');
+
+        const savedPro = localStorage.getItem(`eduspark_pro_${profile.id}`);
+        if (savedPro) {
+          const { active } = JSON.parse(savedPro);
+          if (active) setIsPro(true);
+        }
+      } catch (e) {
+        setGoogleUser(tokenResponse);
+      }
+    },
+    onError: (errorResponse) => {
+      console.error('Login Failed:', errorResponse);
+    },
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents',
+  });
+
+  const handleLogout = () => {
+    googleLogout();
+    setGoogleUser(null);
+    sessionStorage.removeItem('google_user_id');
+    try {
+      const pro = localStorage.getItem('eduspark_pro');
+      if (!pro) setIsPro(false);
+    } catch (e) {}
+  };
 
   // Pro feature states
   const [unitResult, setUnitResult] = useState(null);
@@ -535,7 +576,19 @@ Make it engaging, pedagogically sound, and directly tied to the lesson content.`
 
       <main className="flex-1 overflow-y-auto p-12 relative">
         <div className="max-w-5xl mx-auto space-y-16">
-          <header className="flex justify-end"><button onClick={() => router.push('/auth/signin')} className="bg-brand-600 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-brand-500 transition-all">Sign In</button></header>
+          <header className="flex justify-end">
+            {googleUser ? (
+              <div className="flex items-center gap-3">
+                {googleUser.profile?.picture && (
+                  <img src={googleUser.profile.picture} alt="avatar" className="w-8 h-8 rounded-full" />
+                )}
+                <span className="text-sm font-semibold text-slate-700">{googleUser.profile?.name || googleUser.profile?.email || 'User'}</span>
+                <button onClick={handleLogout} className="bg-slate-200 text-slate-700 px-4 py-2 rounded-full text-sm font-bold hover:bg-slate-300 transition-all">Logout</button>
+              </div>
+            ) : (
+              <button onClick={() => login()} className="bg-brand-600 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-brand-500 transition-all">Sign In</button>
+            )}
+          </header>
           
           <div className="relative max-w-3xl mx-auto">
             <input 
