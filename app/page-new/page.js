@@ -687,4 +687,4 @@ Make it engaging, pedagogically sound, and directly tied to the lesson content.`
                       </div>
                     ))}
                   </div>
-                </div
+                </div>
