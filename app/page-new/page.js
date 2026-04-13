@@ -454,6 +454,18 @@ Make it engaging, pedagogically sound, and directly tied to the lesson content.`
     }
   };
 
+  const [generateMode, setGenerateMode] = React.useState('lesson');
+
+  const handleGenerateByMode = () => {
+    if (!topic.trim()) return alert('Please enter a topic first.');
+    if (generateMode === 'lesson') handleGenerate();
+    else if (generateMode === 'unit') handleGenerateUnit();
+    else if (generateMode === 'slides') handleGenerateSlides();
+    else if (generateMode === 'worksheet') handleGenerateWorksheet();
+  };
+
+  const isGeneratingAny = isGenerating || isGeneratingUnit || isGeneratingSlides || isGeneratingWorksheet;
+
   const quickDraft = (t, g, s, std) => {
     setTopic(t);
     setGrade(g);
@@ -500,52 +512,16 @@ Make it engaging, pedagogically sound, and directly tied to the lesson content.`
           </div>
         </section>
 
-        <section className="flex-1">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Generate Assets</h3>
-          <div className="space-y-3">
-            <button 
-              onClick={() => handleGenerate()} 
-              disabled={isGenerating}
-              className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 bg-brand-50 text-brand-700 border-brand-100"
-            >
-              <div className="flex items-center gap-3"><AcademicCapIcon className="w-5 h-5"/>Lesson Plan</div>
-            </button>
-            <button 
-              onClick={() => handleGenerateUnit()} 
-              disabled={isGeneratingUnit}
-              className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 border-dashed border-slate-200 text-slate-400 hover:border-brand-600"
-            >
-              <div className="flex items-center gap-3"><BookOpenIcon className="w-5 h-5"/>Unit Plan</div>
-              <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>
-            </button>
-            <button 
-              onClick={() => handleGenerateSlides()} 
-              disabled={isGeneratingSlides || !result}
-              className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 border-dashed border-slate-200 text-slate-400 hover:border-brand-600 disabled:opacity-50"
-            >
-              <div className="flex items-center gap-3"><PresentationChartBarIcon className="w-5 h-5"/>Google Slides</div>
-              <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>
-            </button>
-            <button 
-              onClick={() => handleGenerateWorksheet()} 
-              disabled={isGeneratingWorksheet || !result}
-              className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-sm border-2 border-dashed border-slate-200 text-slate-400 hover:border-brand-600 disabled:opacity-50"
-            >
-              <div className="flex items-center gap-3"><DocumentDuplicateIcon className="w-5 h-5"/>Worksheets</div>
-              <span className="bg-amber-400 text-[8px] text-white px-2 py-0.5 rounded-md font-black">PRO</span>
-            </button>
-          </div>
-        </section>
-
-        <div className="bg-brand-900 p-6 rounded-[2.5rem] text-white shadow-xl shadow-brand-900/20">
-          <p className="text-[10px] font-black uppercase tracking-widest text-brand-300 mb-2">Premium Feature</p>
-          <p className="text-sm font-bold mb-4">One-click PPT slides and Worksheets.</p>
+        <div className="mt-auto bg-brand-900 p-6 rounded-[2.5rem] text-white shadow-xl shadow-brand-900/20">
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand-300 mb-2">Unlock PRO</p>
+          <p className="text-sm font-bold mb-1">Unit Plans, Google Slides & Worksheets</p>
+          <p className="text-xs text-brand-300 mb-4">Generate a complete curriculum in one click.</p>
           <button onClick={() => router.push('/pricing')} className="w-full bg-brand-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-brand-500 transition-all">Upgrade Now</button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-12 relative">
-        <div className="max-w-5xl mx-auto space-y-16">
+      <main className="flex-1 overflow-y-auto p-8 md:p-12 relative">
+        <div className="max-w-5xl mx-auto space-y-10">
           <header className="flex justify-end">
             {googleUser ? (
               <div className="flex items-center gap-3">
@@ -559,37 +535,99 @@ Make it engaging, pedagogically sound, and directly tied to the lesson content.`
               <button onClick={() => login()} className="bg-brand-600 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-brand-500 transition-all">Sign In</button>
             )}
           </header>
-          
-          <div className="relative max-w-3xl mx-auto">
-            <input 
-              value={topic}
-              onChange={e => setTopic(e.target.value)}
-              className="w-full bg-white p-8 pl-10 pr-44 rounded-[2rem] shadow-2xl border border-slate-100 outline-none text-2xl font-semibold transition-all focus:border-brand-600" 
-              placeholder="Type a topic (e.g. Plate Tectonics)..."
-            />
-            <button 
-              onClick={() => handleGenerate()} 
-              disabled={isGenerating}
-              className="absolute right-4 top-4 bottom-4 bg-brand-600 text-white px-10 rounded-2xl font-black text-sm hover:bg-brand-700 disabled:bg-brand-400"
+
+          {/* Step-by-step input */}
+          <div className="max-w-3xl mx-auto space-y-5">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Step 1 — Enter your topic</p>
+              <input
+                value={topic}
+                onChange={e => setTopic(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleGenerateByMode()}
+                className="w-full bg-white p-6 rounded-2xl shadow-lg border-2 border-slate-100 outline-none text-xl font-semibold transition-all focus:border-brand-600"
+                placeholder="e.g. Plate Tectonics, Fractions, Civil Rights..."
+              />
+            </div>
+
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Step 2 — What do you want to generate?</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { key: 'lesson', label: 'Lesson Plan', desc: 'Single class lesson with procedure & scripts', icon: <AcademicCapIcon className="w-5 h-5" />, pro: false },
+                  { key: 'unit', label: 'Unit Plan', desc: '8–12 lessons around a big idea', icon: <BookOpenIcon className="w-5 h-5" />, pro: true },
+                  { key: 'slides', label: 'Google Slides', desc: 'Slide deck from your lesson plan', icon: <PresentationChartBarIcon className="w-5 h-5" />, pro: true, needsResult: true },
+                  { key: 'worksheet', label: 'Worksheet', desc: 'Student worksheet for your lesson', icon: <DocumentDuplicateIcon className="w-5 h-5" />, pro: true, needsResult: true },
+                ].map(mode => {
+                  const isSelected = generateMode === mode.key;
+                  const isLocked = mode.pro && !isPro;
+                  const needsLesson = mode.needsResult && !result;
+                  return (
+                    <button
+                      key={mode.key}
+                      onClick={() => { if (isLocked) { router.push('/pricing'); return; } setGenerateMode(mode.key); }}
+                      className={`relative flex flex-col items-start p-4 rounded-2xl border-2 text-left transition-all ${
+                        isSelected ? 'border-brand-600 bg-brand-50 shadow-md' :
+                        isLocked ? 'border-slate-200 bg-white opacity-60' :
+                        'border-slate-200 bg-white hover:border-brand-400 hover:shadow-sm'
+                      }`}
+                    >
+                      {mode.pro && (
+                        <span className="absolute top-2 right-2 bg-amber-400 text-[8px] text-white px-1.5 py-0.5 rounded font-black">
+                          {isLocked ? '🔒 PRO' : 'PRO'}
+                        </span>
+                      )}
+                      {needsLesson && !isLocked && (
+                        <span className="absolute top-2 right-2 text-[9px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded">needs lesson first</span>
+                      )}
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-2 ${
+                        isSelected ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {mode.icon}
+                      </div>
+                      <p className="font-bold text-sm text-slate-900 mb-0.5">{mode.label}</p>
+                      <p className="text-[10px] text-slate-500 leading-snug">{mode.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              onClick={handleGenerateByMode}
+              disabled={isGeneratingAny}
+              className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-base hover:bg-brand-700 disabled:bg-brand-400 transition-all shadow-lg"
             >
-              {isGenerating ? 'Drafting...' : 'Draft Magic'}
+              {isGeneratingAny ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block"></span>
+                  {isGenerating ? generatingStatus || 'Generating...' : 'Generating...'}
+                </span>
+              ) : (
+                <>
+                  {generateMode === 'lesson' && '✦ Generate Lesson Plan'}
+                  {generateMode === 'unit' && '✦ Generate Unit Plan'}
+                  {generateMode === 'slides' && '✦ Generate Google Slides'}
+                  {generateMode === 'worksheet' && '✦ Generate Worksheet'}
+                </>
+              )}
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              { title: 'The Water Cycle', sub: 'SCIENCE', g: 'K-5', s: 'Science', std: 'NGSS' },
-              { title: 'Pythagorean Theorem', sub: 'MATHEMATICS', g: '6-8', s: 'Math', std: 'CCSS' },
-              { title: 'Civil Rights Movement', sub: 'SOCIAL STUDIES', g: '9-12', s: 'Social Studies', std: 'CCSS' }
-            ].map((card, i) => (
-              <button key={i} onClick={() => quickDraft(card.title, card.g, card.s, card.std)} className="group bg-white border border-slate-200 p-6 rounded-3xl text-left transition-all hover:-translate-y-1 hover:shadow-xl shadow-sm">
-                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mb-4">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{card.sub}</p>
-                <p className="font-bold text-slate-800">{card.title}</p>
-              </button>
-            ))}
+          {/* Quick examples */}
+          <div className="max-w-3xl mx-auto">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Quick examples</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { title: 'The Water Cycle', sub: 'SCIENCE', g: 'K-5', s: 'Science', std: 'NGSS' },
+                { title: 'Pythagorean Theorem', sub: 'MATHEMATICS', g: '6-8', s: 'Math', std: 'CCSS' },
+                { title: 'Civil Rights Movement', sub: 'SOCIAL STUDIES', g: '9-12', s: 'Social Studies', std: 'CCSS' }
+              ].map((card, i) => (
+                <button key={i} onClick={() => { setGenerateMode('lesson'); quickDraft(card.title, card.g, card.s, card.std); }} className="bg-white border border-slate-200 p-5 rounded-2xl text-left transition-all hover:-translate-y-1 hover:shadow-lg shadow-sm">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{card.sub}</p>
+                  <p className="font-bold text-slate-800">{card.title}</p>
+                </button>
+              ))}
+            </div>
           </div>
 
           {isGenerating && (
