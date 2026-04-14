@@ -1879,7 +1879,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             )}
             
             {/* Worksheet Display */}
-            {currentWorksheet && !isGeneratingWorksheet && (
+            {lessonTab === 'worksheet' && currentWorksheet && !isGeneratingWorksheet && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
                 <div className="px-8 py-4 border-b bg-emerald-50 flex justify-between items-center">
                   <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest flex items-center gap-2">
@@ -1951,7 +1951,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             )}
 
             {/* Leveled Texts Display */}
-            {currentLeveledTexts && !isGeneratingLeveledTexts && (
+            {lessonTab === 'leveled_texts' && currentLeveledTexts && !isGeneratingLeveledTexts && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
                 <div className="px-8 py-4 border-b bg-blue-50 flex justify-between items-center">
                   <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">
@@ -1991,7 +1991,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             )}
 
             {/* Slides Display */}
-            {currentSlides && !isGeneratingSlides && (
+            {lessonTab === 'slides' && currentSlides && !isGeneratingSlides && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
                 <div className="px-8 py-4 border-b bg-purple-50 flex justify-between items-center">
                   <span className="text-[10px] font-bold text-purple-700 uppercase tracking-widest">
