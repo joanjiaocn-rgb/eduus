@@ -89,7 +89,7 @@ function HistorySidebar({ history, currentId, onSelect, onDelete, onClose }) {
               : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-blue-50/50'
           }`}
         >
-          <p className="font-bold text-sm text-slate-800 truncate pr-6">{item.plan.isUnit ? (item.plan.unitTitle || item.topic) : (item.plan.topic || item.topic)}</p>
+          <p className="font-bold text-sm text-slate-800 truncate pr-6">{item.plan.isUnit ? (item.topic || item.plan.unitTitle || 'Unit Plan') : (item.plan.topic || item.topic || 'Lesson Plan')}</p>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-[10px] text-slate-400 font-medium">{item.plan.isUnit ? 'Unit Plan' : 'Single Lesson'} • {item.subject} • {item.grade}</span>
           </div>
