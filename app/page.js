@@ -406,6 +406,10 @@ export default function EduSparkPro() {
     setIsGenerating(true);
     setCurrentPlan(null);
     setCurrentId(null);
+    // Clear previous generated assets when creating new lesson
+    setCurrentWorksheet(null);
+    setCurrentLeveledTexts(null);
+    setCurrentSlides(null);
 
     // Streaming-style status messages
     const statusMessages = [
@@ -576,6 +580,10 @@ Return a JSON object with this exact structure:
     setIsGenerating(true);
     setCurrentUnit(null);
     setCurrentId(null);
+    // Clear previous generated assets when creating new unit
+    setCurrentWorksheet(null);
+    setCurrentLeveledTexts(null);
+    setCurrentSlides(null);
 
     const systemPrompt = `You are a National Board Certified Teacher with 15+ years of experience in US public schools.
 
