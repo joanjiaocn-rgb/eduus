@@ -1698,8 +1698,16 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                               <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-emerald-500" /> One-click PDF export</li>
                             </ul>
                             <div className="pt-4">
-                              <button onClick={() => { if (!isPro) { setPaywallFeature('Worksheet'); setShowPaywall(true); } else handleGenerateWorksheet(); }} className="w-full bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200">
-                                Generate Worksheet 📝
+                              <button 
+                                onClick={() => { if (!isPro) { setPaywallFeature('Worksheet'); setShowPaywall(true); } else handleGenerateWorksheet(); }} 
+                                disabled={isGeneratingWorksheet}
+                                className={`w-full px-8 py-4 rounded-2xl font-bold transition-colors shadow-md shadow-emerald-200 ${isGeneratingWorksheet ? 'bg-emerald-300 cursor-wait' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+                              >
+                                {isGeneratingWorksheet ? (
+                                  <span className="flex items-center justify-center gap-2"><span className="animate-spin">⏳</span> Generating...</span>
+                                ) : (
+                                  <span>Generate Worksheet 📝</span>
+                                )}
                               </button>
                               {!isPro && <p className="text-xs text-center text-slate-400 mt-2">🔒 Pro feature</p>}
                             </div>
@@ -1773,8 +1781,16 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                               <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-blue-500" /> Ready for small group instruction</li>
                             </ul>
                             <div className="pt-4">
-                              <button onClick={() => { if (!isPro) { setPaywallFeature('Leveled Texts'); setShowPaywall(true); } else handleGenerateLeveledTexts(); }} className="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-200">
-                                Generate Leveled Texts 📖
+                              <button 
+                                onClick={() => { if (!isPro) { setPaywallFeature('Leveled Texts'); setShowPaywall(true); } else handleGenerateLeveledTexts(); }} 
+                                disabled={isGeneratingLeveledTexts}
+                                className={`w-full px-8 py-4 rounded-2xl font-bold transition-colors shadow-md shadow-blue-200 ${isGeneratingLeveledTexts ? 'bg-blue-300 cursor-wait' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                              >
+                                {isGeneratingLeveledTexts ? (
+                                  <span className="flex items-center justify-center gap-2"><span className="animate-spin">⏳</span> Generating...</span>
+                                ) : (
+                                  <span>Generate Leveled Texts 📖</span>
+                                )}
                               </button>
                               {!isPro && <p className="text-xs text-center text-slate-400 mt-2">🔒 Pro feature</p>}
                             </div>
@@ -1857,8 +1873,16 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                               <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-purple-500" /> One-click copy to clipboard</li>
                             </ul>
                             <div className="pt-4">
-                              <button onClick={() => { if (!isPro) { setPaywallFeature('Google Slides'); setShowPaywall(true); } else handleGenerateSlides(); }} className="w-full bg-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-purple-700 transition-colors shadow-md shadow-purple-200">
-                                Generate Google Slides 📽️
+                              <button 
+                                onClick={() => { if (!isPro) { setPaywallFeature('Google Slides'); setShowPaywall(true); } else handleGenerateSlides(); }} 
+                                disabled={isGeneratingSlides}
+                                className={`w-full px-8 py-4 rounded-2xl font-bold transition-colors shadow-md shadow-purple-200 ${isGeneratingSlides ? 'bg-purple-300 cursor-wait' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                              >
+                                {isGeneratingSlides ? (
+                                  <span className="flex items-center justify-center gap-2"><span className="animate-spin">⏳</span> Generating...</span>
+                                ) : (
+                                  <span>Generate Google Slides 📽️</span>
+                                )}
                               </button>
                               {!isPro && <p className="text-xs text-center text-slate-400 mt-2">🔒 Pro feature</p>}
                             </div>
