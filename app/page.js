@@ -1144,8 +1144,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                 setCurrentUnit(null); 
                 // Reset to main lesson tab when switching back to lesson mode
                 setLessonTab('lesson');
-                // Don't clear assets when switching mode, keep them for when user switches back
-                if (currentId) setCurrentId(null);
+                // Keep current lesson, id, and assets when switching mode - preserve everything for quick switching
               }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 mode === 'lesson' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
@@ -1156,9 +1155,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             <button
               onClick={() => { 
                 setMode('unit'); 
-                setCurrentPlan(null); 
-                setCurrentId(null);
-                // Don't clear assets when switching mode - keep them for when user switches back to this lesson
+                // Keep current lesson, id, and assets when switching mode - preserve everything for quick switching
                 if (!isPro) { setPaywallFeature('Unit Plan'); setShowPaywall(true); } 
               }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
