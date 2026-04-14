@@ -113,19 +113,64 @@ function HistorySidebar({ history, currentId, onSelect, onDelete, onClose }) {
 
 // ── Main Component ──────────────────────────────────────────────
 export default function EduSparkPro() {
-  const [topic, setTopic] = useState('');
-  const [grade, setGrade] = useState('Grade 5');
-  const [standard, setStandard] = useState('Common Core (CCSS)');
-  const [subject, setSubject] = useState('Science');
+  const [mode, setMode] = useState('lesson'); // 'lesson' | 'unit'
+  // Separate input state for lesson and unit to preserve input when switching mode
+  const [lessonInput, setLessonInput] = useState({
+    topic: '',
+    grade: 'Grade 5',
+    standard: 'Common Core (CCSS)',
+    subject: 'Science',
+  });
+  const [unitInput, setUnitInput] = useState({
+    topic: '',
+    grade: 'Grade 5',
+    standard: 'Common Core (CCSS)',
+    subject: 'Science',
+  });
+  const [unitLessonCount, setUnitLessonCount] = useState(10); // User-defined lesson count for unit
+  
+  // Current input based on mode
+  const topic = mode === 'lesson' ? lessonInput.topic : unitInput.topic;
+  const grade = mode === 'lesson' ? lessonInput.grade : unitInput.grade;
+  const standard = mode === 'lesson' ? lessonInput.standard : unitInput.standard;
+  const subject = mode === 'lesson' ? lessonInput.subject : unitInput.subject;
+  
+  const setTopic = (newTopic) => {
+    if (mode === 'lesson') {
+      setLessonInput(prev => ({ ...prev, topic: newTopic }));
+    } else {
+      setUnitInput(prev => ({ ...prev, topic: newTopic }));
+    }
+  };
+  const setGrade = (newGrade) => {
+    if (mode === 'lesson') {
+      setLessonInput(prev => ({ ...prev, grade: newGrade }));
+    } else {
+      setUnitInput(prev => ({ ...prev, grade: newGrade }));
+    }
+  };
+  const setStandard = (newStandard) => {
+    if (mode === 'lesson') {
+      setLessonInput(prev => ({ ...prev, standard: newStandard }));
+    } else {
+      setUnitInput(prev => ({ ...prev, standard: newStandard }));
+    }
+  };
+  const setSubject = (newSubject) => {
+    if (mode === 'lesson') {
+      setLessonInput(prev => ({ ...prev, subject: newSubject }));
+    } else {
+      setUnitInput(prev => ({ ...prev, subject: newSubject }));
+    }
+  };
+  
   const [currentPlan, setCurrentPlan] = useState(null);
   const [currentId, setCurrentId] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [saveToast, setSaveToast] = useState(false);
-  const [mode, setMode] = useState('lesson'); // 'lesson' | 'unit'
   const [currentUnit, setCurrentUnit] = useState(null);
-  const [unitLessonCount, setUnitLessonCount] = useState(10); // User-defined lesson count for unit
   const [googleUser, setGoogleUser] = useState(null);
   const [exportToast, setExportToast] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -1018,6 +1063,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
       setCurrentSlides(item.slides || null);
     }
     setCurrentId(item.id);
+    // Input is automatically synced via mode-based getters, setTopic will route to correct input
     setTopic(item.topic);
     setGrade(item.grade);
     setSubject(item.subject);
@@ -1162,7 +1208,6 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                 // Don't clear currentUnit when switching to lesson mode - preserve unit for when user switches back
                 // Reset to main lesson tab when switching back to lesson mode
                 setLessonTab('lesson');
-                // Keep current lesson, id, and assets when switching mode - preserve everything for quick switching
               }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 mode === 'lesson' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
