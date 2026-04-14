@@ -1139,7 +1139,12 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
           {/* Mode Toggle */}
           <div className="flex items-center bg-slate-100 rounded-lg p-1">
             <button
-              onClick={() => { setMode('lesson'); setCurrentUnit(null); }}
+              onClick={() => { 
+                setMode('lesson'); 
+                setCurrentUnit(null); 
+                // Clear unit when switching back to lesson
+                setCurrentId(null);
+              }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 mode === 'lesson' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
@@ -1147,7 +1152,16 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
               <DocumentTextIcon className="w-3.5 h-3.5" /> Single Lesson
             </button>
             <button
-              onClick={() => { setMode('unit'); setCurrentPlan(null); if (!isPro) { setPaywallFeature('Unit Plan'); setShowPaywall(true); } }}
+              onClick={() => { 
+                setMode('unit'); 
+                setCurrentPlan(null); 
+                setCurrentId(null);
+                // Clear all lesson assets when switching to unit
+                setCurrentWorksheet(null);
+                setCurrentLeveledTexts(null);
+                setCurrentSlides(null);
+                if (!isPro) { setPaywallFeature('Unit Plan'); setShowPaywall(true); } 
+              }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 mode === 'unit' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
