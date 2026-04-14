@@ -1141,7 +1141,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             <button
               onClick={() => { 
                 setMode('lesson'); 
-                setCurrentUnit(null); 
+                // Don't clear currentUnit when switching to lesson mode - preserve unit for when user switches back
                 // Reset to main lesson tab when switching back to lesson mode
                 setLessonTab('lesson');
                 // Keep current lesson, id, and assets when switching mode - preserve everything for quick switching
