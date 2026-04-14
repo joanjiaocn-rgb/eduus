@@ -1636,18 +1636,74 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                         <p className="text-slate-500">Ready for print or digital distribution</p>
                       </div>
                       {currentWorksheet ? (
-                        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm" ref={worksheetRef}>
-                            <h2 className="text-2xl font-black text-slate-900 mb-6">{currentWorksheet.title}</h2>
-                            {currentWorksheet.sections?.map((section, si) => (
-                                <div key={si} className="space-y-4 mb-6">
-                                    <h3 className="font-black text-slate-800 uppercase text-sm tracking-widest">{section.title}</h3>
-                                    <p className="text-sm text-slate-700">{section.content}</p>
+                        <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-lg rounded-4xl border border-white/40 p-6">
+                          {/* Preview Card */}
+                          <div className="w-full md:w-1/2 aspect-video bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl border border-emerald-200 flex items-center justify-center overflow-hidden shadow-sm">
+                            <div className="w-[90%] h-[80%] bg-white/90 rounded-2xl p-4 flex flex-col justify-between">
+                              <div>
+                                <div className="w-3/4 h-4 bg-emerald-200 rounded mb-3"></div>
+                                <div className="w-full h-2 bg-emerald-100 rounded mb-2"></div>
+                                <div className="w-5/6 h-2 bg-emerald-100 rounded mb-2"></div>
+                                <div className="w-2/3 h-2 bg-emerald-100 rounded"></div>
+                              </div>
+                              <div className="flex justify-end">
+                                <div className="w-1/3 h-6 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                  <span className="text-white text-xs font-bold">Ready</span>
                                 </div>
-                            ))}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Action Area */}
+                          <div className="w-full md:w-1/2 flex flex-col justify-center space-y-4 px-2">
+                            <h3 className="text-xl font-bold text-slate-900">{currentWorksheet.title}</h3>
+                            <p className="text-slate-600 text-sm">Your custom worksheet has been generated successfully. Use the toolbar below to print or export.</p>
+                            <ul className="text-sm text-slate-600 space-y-2">
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-emerald-500" /> Ready for printing</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-emerald-500" /> Common Core aligned</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-emerald-500" /> Multiple question types</li>
+                            </ul>
+                            <div className="pt-4">
+                              <button 
+                                onClick={() => { const el = worksheetRef.current; if (el) window.print(); }}
+                                className="w-full bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200"
+                              >
+                                Print Worksheet 🖨️
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       ) : (
-                        <div className="text-center py-12">
-                          <button onClick={() => { if (!isPro) { setPaywallFeature('Worksheet'); setShowPaywall(true); } else handleGenerateWorksheet(); }} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700">Generate Worksheet 📝</button>
+                        <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-lg rounded-4xl border border-white/40 p-6">
+                          {/* Preview Card */}
+                          <div className="w-full md:w-1/2 aspect-video bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl border border-emerald-200 flex items-center justify-center overflow-hidden shadow-sm">
+                            <div className="w-[90%] h-[80%] bg-white/90 rounded-2xl p-4 flex flex-col justify-between">
+                              <div>
+                                <div className="w-3/4 h-4 bg-emerald-200 rounded mb-3"></div>
+                                <div className="w-full h-2 bg-emerald-100 rounded mb-2"></div>
+                                <div className="w-5/6 h-2 bg-emerald-100 rounded mb-2"></div>
+                                <div className="w-2/3 h-2 bg-emerald-100 rounded"></div>
+                              </div>
+                              <div className="flex justify-end">
+                                <div className="w-1/4 h-6 bg-emerald-500 rounded-lg"></div>
+                              </div>
+                            </div>
+                          </div>
+                          {/* Action Area */}
+                          <div className="w-full md:w-1/2 flex flex-col justify-center space-y-4 px-2">
+                            <h3 className="text-xl font-bold text-slate-900">Professional Worksheet</h3>
+                            <p className="text-slate-600 text-sm">Common Core aligned, ready-to-print worksheets with vocabulary, questions, and exit tickets.</p>
+                            <ul className="text-sm text-slate-600 space-y-2">
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-emerald-500" /> Includes answer key</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-emerald-500" /> Multiple question formats</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-emerald-500" /> One-click PDF export</li>
+                            </ul>
+                            <div className="pt-4">
+                              <button onClick={() => { if (!isPro) { setPaywallFeature('Worksheet'); setShowPaywall(true); } else handleGenerateWorksheet(); }} className="w-full bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200">
+                                Generate Worksheet 📝
+                              </button>
+                              {!isPro && <p className="text-xs text-center text-slate-400 mt-2">🔒 Pro feature</p>}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1660,17 +1716,69 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                         <p className="text-slate-500">Reading materials at 3 Lexile levels</p>
                       </div>
                       {currentLeveledTexts ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {['Emerging', 'Proficient', 'Advanced'].map(lvl => (
-                                <div key={lvl} className="bg-white p-6 rounded-2xl border border-slate-200">
-                                    <h3 className="font-bold mb-2">{lvl}</h3>
-                                    <p className="text-sm text-slate-600">{currentLeveledTexts[lvl.toLowerCase()] || 'Generating...'}</p>
+                        <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-lg rounded-4xl border border-white/40 p-6">
+                          {/* Preview Card */}
+                          <div className="w-full md:w-1/2 aspect-video bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl border border-blue-200 flex items-center justify-center overflow-hidden shadow-sm">
+                            <div className="grid grid-cols-3 gap-3 w-[90%] h-[80%]">
+                              {['Emerging', 'Proficient', 'Advanced'].map((lvl, i) => (
+                                <div key={i} className="bg-white/90 rounded-xl p-2 flex flex-col">
+                                  <div className={`text-[8px] font-black text-white px-1 rounded-full mb-2 text-center ${i === 0 ? 'bg-green-500' : i === 1 ? 'bg-yellow-500' : 'bg-red-500'}`}>{lvl.split(' ')[0]}</div>
+                                  <div className="flex-1 space-y-1">
+                                    <div className="w-full h-1 bg-blue-100 rounded"></div>
+                                    <div className="w-3/4 h-1 bg-blue-100 rounded"></div>
+                                    <div className="w-5/6 h-1 bg-blue-100 rounded"></div>
+                                  </div>
                                 </div>
-                            ))}
+                              ))}
+                            </div>
+                          </div>
+                          {/* Action Area */}
+                          <div className="w-full md:w-1/2 flex flex-col justify-center space-y-4 px-2">
+                            <h3 className="text-xl font-bold text-slate-900">3 Differentiated Texts</h3>
+                            <p className="text-slate-600 text-sm">Leveled reading texts are ready for your differentiated reading groups.</p>
+                            <ul className="text-sm text-slate-600 space-y-2">
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-blue-500" /> Ready to use</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-blue-500" /> Built-in comprehension questions</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-blue-500" /> Exact Lexile ranges</li>
+                            </ul>
+                            <div className="pt-4">
+                              <p className="text-center text-slate-500 text-sm mb-2">Scroll down to view all levels</p>
+                            </div>
+                          </div>
                         </div>
                       ) : (
-                        <div className="text-center py-12">
-                          <button onClick={() => { if (!isPro) { setPaywallFeature('Leveled Texts'); setShowPaywall(true); } else handleGenerateLeveledTexts(); }} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700">Generate Leveled Texts 📖</button>
+                        <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-lg rounded-4xl border border-white/40 p-6">
+                          {/* Preview Card */}
+                          <div className="w-full md:w-1/2 aspect-video bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl border border-blue-200 flex items-center justify-center overflow-hidden shadow-sm">
+                            <div className="grid grid-cols-3 gap-3 w-[90%] h-[80%]">
+                              {['Emerging', 'Proficient', 'Advanced'].map((lvl, i) => (
+                                <div key={i} className="bg-white/90 rounded-xl p-2 flex flex-col">
+                                  <div className={`text-[8px] font-black text-white px-1 rounded-full mb-2 text-center ${i === 0 ? 'bg-green-500' : i === 1 ? 'bg-yellow-500' : 'bg-red-500'}`}>{lvl.split(' ')[0]}</div>
+                                  <div className="flex-1 space-y-1">
+                                    <div className="w-full h-1 bg-blue-100 rounded"></div>
+                                    <div className="w-3/4 h-1 bg-blue-100 rounded"></div>
+                                    <div className="w-5/6 h-1 bg-blue-100 rounded"></div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          {/* Action Area */}
+                          <div className="w-full md:w-1/2 flex flex-col justify-center space-y-4 px-2">
+                            <h3 className="text-xl font-bold text-slate-900">Differentiated Reading</h3>
+                            <p className="text-slate-600 text-sm">Three reading levels with Lexile ranges and comprehension questions to meet all your students' needs.</p>
+                            <ul className="text-sm text-slate-600 space-y-2">
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-blue-500" /> 3 Lexile levels (400L - 1000L+)</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-blue-500" /> Built-in comprehension checks</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-blue-500" /> Ready for small group instruction</li>
+                            </ul>
+                            <div className="pt-4">
+                              <button onClick={() => { if (!isPro) { setPaywallFeature('Leveled Texts'); setShowPaywall(true); } else handleGenerateLeveledTexts(); }} className="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-200">
+                                Generate Leveled Texts 📖
+                              </button>
+                              {!isPro && <p className="text-xs text-center text-slate-400 mt-2">🔒 Pro feature</p>}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1683,12 +1791,78 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                         <p className="text-slate-500">Unit slide deck generated in seconds</p>
                       </div>
                       {currentSlides ? (
-                        <div className="bg-white p-8 rounded-3xl border border-slate-200">
-                          <p className="text-center">Slides are ready! Export to Google Slides...</p>
+                        <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-lg rounded-4xl border border-white/40 p-6">
+                          {/* Preview Card */}
+                          <div className="w-full md:w-1/2 aspect-video bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl border border-purple-200 flex items-center justify-center overflow-hidden shadow-sm">
+                            <div className="w-[90%] h-[80%] space-y-2 flex flex-col">
+                              <div className="bg-white/90 rounded-xl p-3 flex-1 flex flex-col justify-center">
+                                <div className="w-2/3 h-3 bg-purple-200 rounded mx-auto mb-2"></div>
+                                <div className="w-3/4 h-2 bg-purple-100 rounded mx-auto"></div>
+                              </div>
+                              <div className="grid grid-cols-4 gap-2">
+                                {[1,2,3,4].map(i => (
+                                  <div key={i} className="bg-white/90 h-10 rounded-lg"></div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Action Area */}
+                          <div className="w-full md:w-1/2 flex flex-col justify-center space-y-4 px-2">
+                            <h3 className="text-xl font-bold text-slate-900">{currentSlides.presentationTitle}</h3>
+                            <p className="text-slate-600 text-sm">Full slide deck generated. Copy to clipboard and paste directly into Google Slides.</p>
+                            <ul className="text-sm text-slate-600 space-y-2">
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-purple-500" /> {currentSlides.slides?.length || 10} slides ready</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-purple-500" /> Full speaker notes included</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-purple-500" /> One-click copy to clipboard</li>
+                            </ul>
+                            <div className="pt-4">
+                              <button 
+                                onClick={() => {
+                                  const slidesText = currentSlides.slides.map(s => 
+                                    `Slide ${s.slideNumber}: ${s.title}\n${s.bulletPoints?.join('\n') || ''}\n\nSpeaker Notes: ${s.speakerNotes}`
+                                  ).join('\n\n---\n\n');
+                                  navigator.clipboard.writeText(slidesText);
+                                  alert('Slides copied! Paste into Google Slides.');
+                                }}
+                                className="w-full bg-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-purple-700 transition-colors shadow-md shadow-purple-200"
+                              >
+                                Copy All Slides 📋
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       ) : (
-                        <div className="text-center py-12">
-                          <button onClick={() => { if (!isPro) { setPaywallFeature('Google Slides'); setShowPaywall(true); } else handleGenerateSlides(); }} className="bg-purple-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-purple-700">Generate Slides 📊</button>
+                        <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-lg rounded-4xl border border-white/40 p-6">
+                          {/* Preview Card */}
+                          <div className="w-full md:w-1/2 aspect-video bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl border border-purple-200 flex items-center justify-center overflow-hidden shadow-sm">
+                            <div className="w-[90%] h-[80%] space-y-2 flex flex-col">
+                              <div className="bg-white/90 rounded-xl p-3 flex-1 flex flex-col justify-center">
+                                <div className="w-2/3 h-3 bg-purple-200 rounded mx-auto mb-2"></div>
+                                <div className="w-3/4 h-2 bg-purple-100 rounded mx-auto"></div>
+                              </div>
+                              <div className="grid grid-cols-4 gap-2">
+                                {[1,2,3,4].map(i => (
+                                  <div key={i} className="bg-white/90 h-10 rounded-lg"></div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Action Area */}
+                          <div className="w-full md:w-1/2 flex flex-col justify-center space-y-4 px-2">
+                            <h3 className="text-xl font-bold text-slate-900">Complete Slide Deck</h3>
+                            <p className="text-slate-600 text-sm">Full lesson presentation with speaker notes, visuals, and discussion prompts ready to copy-paste into Google Slides.</p>
+                            <ul className="text-sm text-slate-600 space-y-2">
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-purple-500" /> 10-15 slides per lesson</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-purple-500" /> Full speaker notes for teachers</li>
+                              <li className="flex items-center gap-2"><CheckBadgeIcon className="w-4 h-4 text-purple-500" /> One-click copy to clipboard</li>
+                            </ul>
+                            <div className="pt-4">
+                              <button onClick={() => { if (!isPro) { setPaywallFeature('Google Slides'); setShowPaywall(true); } else handleGenerateSlides(); }} className="w-full bg-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-purple-700 transition-colors shadow-md shadow-purple-200">
+                                Generate Google Slides 📽️
+                              </button>
+                              {!isPro && <p className="text-xs text-center text-slate-400 mt-2">🔒 Pro feature</p>}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
