@@ -190,13 +190,17 @@ export default function EduSparkPro() {
       savedAt: new Date().toISOString(),
       subject, grade, standard, topic,
       plan,
+      // Save generated assets together with the plan
+      worksheet: currentWorksheet,
+      leveledTexts: currentLeveledTexts,
+      slides: currentSlides,
     };
     const filtered = history.filter(h => h.id !== entry.id);
     persistHistory([entry, ...filtered].slice(0, 20)); // keep last 20
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2000);
     return entry.id;
-  }, [history, subject, grade, standard, topic, persistHistory]);
+  }, [history, subject, grade, standard, topic, currentWorksheet, currentLeveledTexts, currentSlides, persistHistory]);
 
   const handlePrint = useReactToPrint({
     contentRef,
@@ -996,12 +1000,22 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
     setGrade(item.grade);
     setSubject(item.subject);
     setStandard(item.standard);
+    // Restore generated assets from saved history
+    setCurrentWorksheet(item.worksheet || null);
+    setCurrentLeveledTexts(item.leveledTexts || null);
+    setCurrentSlides(item.slides || null);
     setShowHistory(false);
   };
 
   const handleDeleteHistory = (id) => {
     persistHistory(history.filter(h => h.id !== id));
-    if (currentId === id) { setCurrentPlan(null); setCurrentId(null); }
+    if (currentId === id) { 
+      setCurrentPlan(null); 
+      setCurrentId(null); 
+      setCurrentWorksheet(null);
+      setCurrentLeveledTexts(null);
+      setCurrentSlides(null);
+    }
   };
 
   return (
