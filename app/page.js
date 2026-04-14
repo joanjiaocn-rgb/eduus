@@ -1142,7 +1142,9 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
               onClick={() => { 
                 setMode('lesson'); 
                 setCurrentUnit(null); 
-                // Don't clear unit when switching back to lesson, keep it for when user switches back
+                // Reset to main lesson tab when switching back to lesson mode
+                setLessonTab('lesson');
+                // Don't clear assets when switching mode, keep them for when user switches back
                 if (currentId) setCurrentId(null);
               }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
@@ -1156,7 +1158,10 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                 setMode('unit'); 
                 setCurrentPlan(null); 
                 setCurrentId(null);
-                // Don't clear assets when switching mode, keep them for when user switches back
+                // Clear asset content when switching to unit - assets are per-lesson
+                setCurrentWorksheet(null);
+                setCurrentLeveledTexts(null);
+                setCurrentSlides(null);
                 if (!isPro) { setPaywallFeature('Unit Plan'); setShowPaywall(true); } 
               }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
