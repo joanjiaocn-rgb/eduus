@@ -1158,10 +1158,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                 setMode('unit'); 
                 setCurrentPlan(null); 
                 setCurrentId(null);
-                // Clear asset content when switching to unit - assets are per-lesson
-                setCurrentWorksheet(null);
-                setCurrentLeveledTexts(null);
-                setCurrentSlides(null);
+                // Don't clear assets when switching mode - keep them for when user switches back to this lesson
                 if (!isPro) { setPaywallFeature('Unit Plan'); setShowPaywall(true); } 
               }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
