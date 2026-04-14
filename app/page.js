@@ -185,10 +185,14 @@ export default function EduSparkPro() {
   }, []);
 
   const saveCurrentPlan = useCallback((plan, id) => {
+    // Capture current values directly from state to avoid stale closure
     const entry = {
       id: id || Date.now().toString(),
       savedAt: new Date().toISOString(),
-      subject, grade, standard, topic,
+      subject: subject,
+      grade: grade,
+      standard: standard,
+      topic: topic,
       plan,
       // Save generated assets together with the plan
       worksheet: currentWorksheet,
@@ -1231,8 +1235,8 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                   <div className="space-y-3">
                     {history.map(item => (
                       <div key={item.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors">
-                        <p className="font-bold text-sm text-slate-800 truncate">{item.plan?.topic || 'Untitled Plan'}</p>
-                        <p className="text-[10px] text-slate-400 mb-2">{item.subject} · {item.grade} · {new Date(item.savedAt).toLocaleDateString()}</p>
+                        <p className="font-bold text-sm text-slate-800 truncate">{item.plan?.isUnit ? (item.topic || item.plan?.unitTitle || 'Untitled Unit') : (item.plan?.topic || item.topic || 'Untitled Plan')}</p>
+                        <p className="text-[10px] text-slate-400 mb-2">{item.plan?.isUnit ? 'Unit Plan' : 'Single Lesson'} · {item.subject} · {item.grade} · {new Date(item.savedAt).toLocaleDateString()}</p>
                         <div className="flex gap-2">
                           <button onClick={() => { handleSelectHistory(item); setShowProfile(false); }} className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-lg font-bold hover:bg-blue-100">View Plan</button>
                           <button className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-lg font-bold">Slides</button>
