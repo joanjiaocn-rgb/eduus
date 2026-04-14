@@ -2207,20 +2207,6 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
                         Google Docs
                       </button>
                     )}
-                    <button
-                      onClick={() => {
-                        if (!isPro) { setPaywallFeature('Google Slides Generator'); setShowPaywall(true); return; }
-                        handleGenerateUnitSlides();
-                      }}
-                      disabled={!isPro || isGeneratingSlides}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 ${isPro ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
-                    >
-                      {isGeneratingSlides ? (
-                        <><span className="animate-spin">⏳</span> Generating...</>
-                      ) : (
-                        <>{isPro ? '📽️' : '🔒'} Slides {!isPro && <span className="text-[9px] bg-amber-400 text-amber-900 px-1 py-0.5 rounded-full font-black ml-1">PRO</span>}</>
-                      )}
-                    </button>
                   </div>
                 </div>
 
