@@ -994,16 +994,25 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
   };
 
   const handleSelectHistory = (item) => {
-    setCurrentPlan(item.plan);
+    const isUnit = item.plan?.isUnit;
+    if (isUnit) {
+      setMode('unit');
+      setCurrentUnit(item.plan);
+      setCurrentPlan(null);
+    } else {
+      setMode('lesson');
+      setCurrentPlan(item.plan);
+      setCurrentUnit(null);
+      // Restore generated assets from saved history
+      setCurrentWorksheet(item.worksheet || null);
+      setCurrentLeveledTexts(item.leveledTexts || null);
+      setCurrentSlides(item.slides || null);
+    }
     setCurrentId(item.id);
     setTopic(item.topic);
     setGrade(item.grade);
     setSubject(item.subject);
     setStandard(item.standard);
-    // Restore generated assets from saved history
-    setCurrentWorksheet(item.worksheet || null);
-    setCurrentLeveledTexts(item.leveledTexts || null);
-    setCurrentSlides(item.slides || null);
     setShowHistory(false);
   };
 
