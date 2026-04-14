@@ -89,9 +89,9 @@ function HistorySidebar({ history, currentId, onSelect, onDelete, onClose }) {
               : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-blue-50/50'
           }`}
         >
-          <p className="font-bold text-sm text-slate-800 truncate pr-6">{item.plan.topic}</p>
+          <p className="font-bold text-sm text-slate-800 truncate pr-6">{item.plan.isUnit ? item.plan.unitTitle : item.plan.topic}</p>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[10px] text-slate-400 font-medium">{item.subject} • {item.grade}</span>
+            <span className="text-[10px] text-slate-400 font-medium">{item.plan.isUnit ? 'Unit Plan' : 'Single Lesson'} • {item.subject} • {item.grade}</span>
           </div>
           <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.savedAt).toLocaleDateString()}</p>
           <button
@@ -1935,7 +1935,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             )}
             
             {/* Worksheet Display */}
-            {lessonTab === 'worksheet' && currentWorksheet && !isGeneratingWorksheet && (
+            {mode === 'lesson' && lessonTab === 'worksheet' && currentWorksheet && !isGeneratingWorksheet && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
                 <div className="px-8 py-4 border-b bg-emerald-50 flex justify-between items-center">
                   <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest flex items-center gap-2">
@@ -2007,7 +2007,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             )}
 
             {/* Leveled Texts Display */}
-            {lessonTab === 'leveled_texts' && currentLeveledTexts && !isGeneratingLeveledTexts && (
+            {mode === 'lesson' && lessonTab === 'leveled_texts' && currentLeveledTexts && !isGeneratingLeveledTexts && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
                 <div className="px-8 py-4 border-b bg-blue-50 flex justify-between items-center">
                   <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">
@@ -2047,7 +2047,7 @@ Make it engaging, visual, and ready to project in class for the unit launch day.
             )}
 
             {/* Slides Display */}
-            {lessonTab === 'slides' && currentSlides && !isGeneratingSlides && (
+            {mode === 'lesson' && lessonTab === 'slides' && currentSlides && !isGeneratingSlides && (
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden mb-8">
                 <div className="px-8 py-4 border-b bg-purple-50 flex justify-between items-center">
                   <span className="text-[10px] font-bold text-purple-700 uppercase tracking-widest">
