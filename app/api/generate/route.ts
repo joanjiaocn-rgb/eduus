@@ -1,6 +1,8 @@
+import { NextRequest, NextResponse } from 'next/server';
+
 export const runtime = 'edge';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { systemPrompt, userPrompt } = body;
@@ -13,7 +15,7 @@ export async function POST(req: Request) {
     console.log('API Key starts with:', apiKey ? apiKey.substring(0, 10) : 'N/A');
     
     if (!apiKey) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'OpenAI API Key is missing from the environment variables.' },
         { status: 500 }
       );
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
 
     // Validate API key format
     if (!apiKey.startsWith('sk-')) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Invalid API Key format', details: 'Key should start with sk-' },
         { status: 500 }
       );
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
       } catch {
         err = { raw: errText };
       }
-      return Response.json(
+      return NextResponse.json(
         { error: 'OpenAI API error', status: response.status, details: err },
         { status: 500 }
       );
@@ -80,16 +82,16 @@ export async function POST(req: Request) {
       lessonPlan = JSON.parse(aiContent);
     } catch (parseError: any) {
       console.error('JSON parse error. AI content:', aiContent.substring(0, 500));
-      return Response.json(
+      return NextResponse.json(
         { error: 'Failed to parse AI response as JSON', details: parseError.message, rawContent: aiContent.substring(0, 200) },
         { status: 500 }
       );
     }
 
-    return Response.json(lessonPlan);
+    return NextResponse.json(lessonPlan);
   } catch (error: any) {
     console.error('Error generating lesson plan:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to generate lesson plan.', details: error.message, stack: error.stack },
       { status: 500 }
     );
