@@ -25,8 +25,8 @@ export async function POST(req: Request) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
+        // Note: response_format may not work on all models/deployments
+        // temperature: 0.7,
         max_tokens: 4000,
       }),
     });
