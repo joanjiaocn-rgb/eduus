@@ -1,4 +1,12 @@
 name = "eduus"
-compatibility_date = "2024-09-23"
-compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".vercel/output/static"
+compatibility_date = "2024-01-01"
+
+[env.production]
+
+# Environment variables - For production, set these in Cloudflare Dashboard
+[vars]
+# OPENAI_API_KEY = "your-api-key-here"  # Set via Cloudflare Dashboard > Pages > Project Settings > Environment Variables
+
+# Cloudflare Pages configuration
+[site]
+bucket = ".vercel/output/static"
