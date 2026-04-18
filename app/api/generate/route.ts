@@ -40,8 +40,26 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
-    const aiContent = data.choices[0].message.content;
-    const lessonPlan = JSON.parse(aiContent);
+    let aiContent = data.choices[0].message.content;
+    
+    // Strip markdown code fences if present (often added by GPT)
+    aiContent = aiContent.trim();
+    if (aiContent.startsWith('```json')) {
+      aiContent = aiContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (aiContent.startsWith('```')) {
+      aiContent = aiContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    let lessonPlan;
+    try {
+      lessonPlan = JSON.parse(aiContent);
+    } catch (parseError) {
+      console.error('JSON parse error. AI content:', aiContent.substring(0, 500));
+      return Response.json(
+        { error: 'Failed to parse AI response as JSON', details: 'The model returned non-JSON format. Please try again.' },
+        { status: 500 }
+      );
+    }
 
     return Response.json(lessonPlan);
   } catch (error: any) {
