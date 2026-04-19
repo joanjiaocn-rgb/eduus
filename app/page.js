@@ -157,11 +157,22 @@ export default function EduSparkPro() {
       setUnitInput(prev => ({ ...prev, standard: newStandard }));
     }
   };
+  const SUBJECT_STANDARDS = {
+    'Science': ['Next Gen Science (NGSS)', 'TEKS Science (Texas)', 'Virginia SOL Science', 'Florida NGSSS Science'],
+    'Math': ['Common Core Math (CCSS)', 'TEKS Math (Texas)', 'Virginia SOL Math', 'Florida NGSSS Math'],
+    'English Language Arts': ['Common Core ELA (CCSS)', 'TEKS ELA (Texas)', 'Virginia SOL ELA', 'Florida NGSSS ELA'],
+    'Social Studies': ['C3 Framework', 'TEKS Social Studies (Texas)', 'Virginia SOL Social Studies', 'Florida NGSSS Social Studies'],
+    'History': ['C3 Framework', 'TEKS History (Texas)', 'Virginia SOL History', 'AP History Standards'],
+    'Art': ['National Core Arts Standards', 'TEKS Art (Texas)', 'State Arts Standards'],
+    'Physical Education': ['SHAPE America Standards', 'TEKS PE (Texas)', 'State PE Standards'],
+  };
+
   const setSubject = (newSubject) => {
+    const defaultStandard = SUBJECT_STANDARDS[newSubject]?.[0] || 'Common Core (CCSS)';
     if (mode === 'lesson') {
-      setLessonInput(prev => ({ ...prev, subject: newSubject }));
+      setLessonInput(prev => ({ ...prev, subject: newSubject, standard: defaultStandard }));
     } else {
-      setUnitInput(prev => ({ ...prev, subject: newSubject }));
+      setUnitInput(prev => ({ ...prev, subject: newSubject, standard: defaultStandard }));
     }
   };
   
@@ -1779,11 +1790,9 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Standards</label>
                   <select value={standard} onChange={(e) => setStandard(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
-                    <option>Common Core (CCSS)</option>
-                    <option>Next Gen Science (NGSS)</option>
-                    <option>TEKS (Texas)</option>
-                    <option>Virginia SOL</option>
-                    <option>Florida NGSSS</option>
+                    {(SUBJECT_STANDARDS[subject] || ['Common Core (CCSS)', 'Next Gen Science (NGSS)', 'TEKS (Texas)', 'Virginia SOL', 'Florida NGSSS']).map(s => (
+                      <option key={s}>{s}</option>
+                    ))}
                   </select>
                 </div>
                 {mode === 'unit' && (
