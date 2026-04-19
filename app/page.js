@@ -1756,8 +1756,8 @@ Design a rubric that teachers can use to consistently and fairly grade student w
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
                 <Cog6ToothIcon className="w-4 h-4" /> Pedagogy Settings
               </h3>
-              <div className="space-y-5">
-                <div>
+              <div className="space-y-4">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Subject Area</label>
                   <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                     <option>Science</option>
@@ -1769,7 +1769,7 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                     <option>Physical Education</option>
                   </select>
                 </div>
-                <div>
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Grade Level</label>
                   <select value={grade} onChange={(e) => setGrade(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                     <option>Kindergarten</option>
@@ -1787,7 +1787,7 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                     <option>Grade 12</option>
                   </select>
                 </div>
-                <div>
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Standards</label>
                   <select value={standard} onChange={(e) => setStandard(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                     {(SUBJECT_STANDARDS[subject] || ['Common Core (CCSS)', 'Next Gen Science (NGSS)', 'TEKS (Texas)', 'Virginia SOL', 'Florida NGSSS']).map(s => (
@@ -1818,8 +1818,11 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                 </div>
                 
                 {/* Differentiation & Accommodations */}
-                <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100">
-                  <p className="text-[9px] text-purple-600 font-black uppercase mb-3">Differentiation & Accommodations</p>
+                <div className="bg-purple-50 rounded-2xl border-2 border-purple-200 shadow-sm p-4">
+                  <p className="text-[9px] text-purple-600 font-black uppercase mb-3 flex items-center gap-1.5">
+                    <span className="inline-flex items-center bg-purple-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full animate-pulse">AI</span>
+                    Differentiation & Accommodations
+                  </p>
                   <div className="space-y-3">
                     <label className="flex items-start gap-2 cursor-pointer group">
                       <input
@@ -1876,7 +1879,7 @@ Design a rubric that teachers can use to consistently and fairly grade student w
               />
               <button
                 onClick={mode === 'lesson' ? handleGenerate : handleGenerateUnit} disabled={mode === 'unit' ? !isPro || isGenerating : isGenerating}
-                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="bg-gradient-to-r from-blue-600 to-violet-600 text-white px-8 py-3 rounded-xl font-bold hover:from-blue-700 hover:to-violet-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-200"
               >
                 {isGenerating ? (mode === 'lesson' ? "Drafting Plan..." : "Creating Unit...") : (mode === 'lesson' ? "Generate Lesson ✨" : "Generate Unit 📚")}
               </button>
@@ -1919,19 +1922,10 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                     </span>
                   </span>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => saveCurrentPlan(currentPlan, currentId)}
-                      className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 flex items-center gap-1"
-                    >
-                      <CheckIcon className="w-3.5 h-3.5" /> Save
-                    </button>
-                    <button onClick={handlePrint} className="bg-slate-900 text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 flex items-center gap-2">
-                      <DocumentArrowDownIcon className="w-4 h-4" /> Export PDF
-                    </button>
                     {googleUser && (
                       <button 
                         onClick={() => exportToGoogleDocs(currentPlan.topic, currentPlan)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center gap-2"
+                        className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:from-blue-600 hover:to-blue-800 shadow-md flex items-center gap-2"
                       >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
                           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
@@ -1940,6 +1934,15 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                         Google Docs
                       </button>
                     )}
+                    <button onClick={handlePrint} className="border border-slate-300 text-slate-600 px-5 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center gap-2">
+                      <DocumentArrowDownIcon className="w-4 h-4" /> Export PDF
+                    </button>
+                    <button
+                      onClick={() => saveCurrentPlan(currentPlan, currentId)}
+                      className="border border-emerald-300 text-emerald-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-50 flex items-center gap-1"
+                    >
+                      <CheckIcon className="w-3.5 h-3.5" /> Save
+                    </button>
                   </div>
                 </div>
 
@@ -1958,10 +1961,10 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                       <button
                         key={tab.id}
                         onClick={() => setLessonTab(tab.id)}
-                        className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-colors -mb-px ${
+                        className={`flex items-center gap-2 px-4 py-2 my-2 text-xs font-bold rounded-full transition-all ${
                           lessonTab === tab.id
-                            ? 'border-blue-600 text-blue-600'
-                            : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                         }`}
                       >
                         <Icon className="w-4 h-4" /> {tab.label}
