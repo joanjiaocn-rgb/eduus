@@ -190,6 +190,7 @@ export default function EduSparkPro() {
   const [generatingStatus, setGeneratingStatus] = useState('');
   const [isPro, setIsPro] = useState(false); // Default: free tier
   const [lessonCount, setLessonCount] = useState(0);
+  const [showUpsell, setShowUpsell] = useState(false);
   const [lessonTab, setLessonTab] = useState('lesson');
   const [currentWorksheet, setCurrentWorksheet] = useState(null);
   const [isGeneratingWorksheet, setIsGeneratingWorksheet] = useState(false);
@@ -216,6 +217,29 @@ export default function EduSparkPro() {
   const slidesRef = useRef(null);
   const exitTicketRef = useRef(null);
   const rubricRef = useRef(null);
+
+  // Restore Google login from localStorage on page load
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('eduspark_google_user');
+      if (saved) {
+        const user = JSON.parse(saved);
+        // access_token expires in ~1h, check expiry
+        if (user.expires_at && Date.now() < user.expires_at) {
+          setGoogleUser(user);
+          if (user.profile?.id) {
+            const savedPro = localStorage.getItem(`eduspark_pro_${user.profile.id}`);
+            if (savedPro) {
+              const { active } = JSON.parse(savedPro);
+              if (active) setIsPro(true);
+            }
+          }
+        } else {
+          localStorage.removeItem('eduspark_google_user');
+        }
+      }
+    } catch (e) {}
+  }, []);
 
   // Load history from localStorage
   useEffect(() => {
@@ -294,8 +318,9 @@ export default function EduSparkPro() {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
         const profile = await profileRes.json();
-        const userWithProfile = { ...tokenResponse, profile };
+        const userWithProfile = { ...tokenResponse, profile, expires_at: Date.now() + 3500 * 1000 };
         setGoogleUser(userWithProfile);
+        try { localStorage.setItem('eduspark_google_user', JSON.stringify(userWithProfile)); } catch (e) {}
 
         // Store Google ID in sessionStorage for subscription binding
         sessionStorage.setItem('google_user_id', profile.id);
@@ -324,6 +349,7 @@ export default function EduSparkPro() {
   const handleLogout = () => {
     googleLogout();
     setGoogleUser(null);
+    localStorage.removeItem('eduspark_google_user');
     // Reset pro status to localStorage-only check on logout
     try {
       const pro = localStorage.getItem('eduspark_pro');
@@ -1512,6 +1538,55 @@ Design a rubric that teachers can use to consistently and fairly grade student w
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans">
+      {/* IEP/ELL Upsell Modal */}
+      {showUpsell && (
+        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 relative">
+            <button onClick={() => setShowUpsell(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+            <div className="text-center mb-6">
+              <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-xs font-black px-3 py-1.5 rounded-full mb-3">
+                <SparklesIcon className="w-3.5 h-3.5" /> PRO FEATURE
+              </span>
+              <h2 className="text-2xl font-black text-slate-800 mt-2">Unlock IEP &amp; ELL Supports</h2>
+              <p className="text-sm text-slate-500 mt-1">See what Pro generates vs. the basic plan</p>
+            </div>
+            {/* Comparison */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+                <p className="text-[10px] font-black text-slate-400 uppercase mb-3">Free Plan</p>
+                <ul className="space-y-2 text-xs text-slate-500">
+                  <li className="flex items-center gap-2"><span className="text-slate-300">✗</span> IEP accommodations</li>
+                  <li className="flex items-center gap-2"><span className="text-slate-300">✗</span> ELL scaffolds</li>
+                  <li className="flex items-center gap-2"><span className="text-slate-300">✗</span> WIDA-aligned frames</li>
+                  <li className="flex items-center gap-2"><span className="text-slate-300">✗</span> Differentiated tasks</li>
+                  <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Basic lesson plan</li>
+                </ul>
+              </div>
+              <div className="bg-gradient-to-b from-purple-50 to-pink-50 rounded-2xl p-4 border-2 border-purple-300 relative">
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full">PRO</span>
+                <p className="text-[10px] font-black text-purple-600 uppercase mb-3">Pro Plan</p>
+                <ul className="space-y-2 text-xs text-purple-800">
+                  <li className="flex items-center gap-2"><span className="text-purple-500">✓</span> IEP: ADHD, dyslexia, below-level</li>
+                  <li className="flex items-center gap-2"><span className="text-purple-500">✓</span> ELL vocabulary + sentence frames</li>
+                  <li className="flex items-center gap-2"><span className="text-purple-500">✓</span> WIDA levels 1–5 scaffolds</li>
+                  <li className="flex items-center gap-2"><span className="text-purple-500">✓</span> Tiered differentiated tasks</li>
+                  <li className="flex items-center gap-2"><span className="text-purple-500">✓</span> Everything in Free</li>
+                </ul>
+              </div>
+            </div>
+            <button
+              onClick={() => { setShowUpsell(false); setPaywallFeature('IEP/ELL'); setShowPaywall(true); }}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-3 rounded-xl font-black text-sm hover:from-purple-700 hover:to-pink-600 shadow-lg shadow-purple-200 transition-all"
+            >
+              Upgrade to Pro — Unlock All Features ✨
+            </button>
+            <p className="text-center text-[10px] text-slate-400 mt-3">Cancel anytime · Used by 2,000+ teachers</p>
+          </div>
+        </div>
+      )}
+
       {/* Paywall Modal */}
       {showPaywall && (
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1828,7 +1903,10 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                       <input
                         type="checkbox"
                         checked={includeIEP}
-                        onChange={(e) => setIncludeIEP(e.target.checked)}
+                        onChange={(e) => {
+                          if (!isPro && e.target.checked) { setShowUpsell(true); return; }
+                          setIncludeIEP(e.target.checked);
+                        }}
                         className="w-4 h-4 mt-0.5 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
                       />
                       <div className="flex-1">
@@ -1840,7 +1918,10 @@ Design a rubric that teachers can use to consistently and fairly grade student w
                       <input
                         type="checkbox"
                         checked={includeELL}
-                        onChange={(e) => setIncludeELL(e.target.checked)}
+                        onChange={(e) => {
+                          if (!isPro && e.target.checked) { setShowUpsell(true); return; }
+                          setIncludeELL(e.target.checked);
+                        }}
                         className="w-4 h-4 mt-0.5 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
                       />
                       <div className="flex-1">
