@@ -2,6 +2,3 @@ name = "eduus"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
-
-# Environment variables - For production, set these in Cloudflare Dashboard
-# Do NOT put sensitive values here - use Dashboard > Pages > Project Settings > Environment Variables
